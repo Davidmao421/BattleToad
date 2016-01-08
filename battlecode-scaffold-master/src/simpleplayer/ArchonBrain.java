@@ -14,17 +14,23 @@ import battlecode.common.RobotType;
 import battlecode.common.Signal;
 
 public class ArchonBrain implements Brain {
-
+// still doesn't account for own location
 	private boolean firstRun = true;
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
 	
-	private MapLocation com(Collection<MapLocation> locs){
-		int x,y = x = 0;
+	private MapLocation com(Collection<MapLocation> locs, MapLocation self){
+		int x = self.x;
+		int y = self.y;
 		for (MapLocation loc : locs){
 			x+=loc.x;
 			y+=loc.y;
 		}
-		return new MapLocation(x/locs.size(), y/locs.size());
+		if (locs.size() != 0){
+			return new MapLocation(x/(locs.size()+1), y/(locs.size()+1));
+		}
+		else {
+			return null;
+		}
 	}
 	
 	@Override
@@ -36,9 +42,10 @@ public class ArchonBrain implements Brain {
 		Random rand = new Random(rc.getID());
 		int myAttackRange = 24;
 		int sightRange = 35;
+		MapLocation start = rc.getLocation();
 		
 		try {
-			rc.broadcastSignal(2*sightRange); //maximize broadcast range without costing extra stuff
+			rc.broadcastSignal( 20000);//2*sightRange ); //maximize broadcast range without costing extra stuff
 			Clock.yield();
 			
 			Signal[] signals = rc.emptySignalQueue();
@@ -52,14 +59,18 @@ public class ArchonBrain implements Brain {
 
 		while (true) {
 			try {
-				Clock.yield();
-				MapLocation com = com(archonStarts.values());
+				MapLocation com = com(archonStarts.values(), start);
 				if (com.distanceSquaredTo(rc.getLocation()) <= 4) {
+					if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){
+						rc.build(Direction.SOUTH, RobotType.SOLDIER);
+					}
+				
 					
 				}
 				else {
 					rc.move(rc.getLocation().directionTo(com));
 				}
+				Clock.yield();
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 				e.printStackTrace();

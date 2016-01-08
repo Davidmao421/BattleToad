@@ -1,6 +1,6 @@
 package simpleplayer;
 
-import examplefuncsplayer.PacketType;
+import simpleplayer.PacketType;
 
 public class Tester {
 
