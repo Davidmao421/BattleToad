@@ -64,19 +64,15 @@ public class ArchonBrain implements Brain {
 				Signal[] signals = rc.emptySignalQueue();
 				int numGuards = 0;
 				for (Signal naw: signals){
-					//if (naw.){ //type = guard
-						//numGuards +=1;
-						// IDK HOW TO GET ROBOT TYPE FROM SIGNALS
-					//}
+					archonStarts.put(naw.getID(), naw.getLocation());
 				}
 				MapLocation com = com(archonStarts.values(), start);
-				if (com.distanceSquaredTo(rc.getLocation()) <= 4) {
-					for (int i = 0; i< 8 ; i++){
-					}
+				if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
 					if (numGuards <= 4 && rc.canBuild(Direction.SOUTH, RobotType.GUARD)){
 						rc.build(Direction.SOUTH, RobotType.GUARD);
+						numGuards++;
 					}
-					if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){ // change it so the person can build more efficiently. Currently ONLY south
+					else if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){ // change it so the person can build more efficiently. Currently ONLY south
 						rc.build(Direction.SOUTH, RobotType.SOLDIER);
 					}
 				
