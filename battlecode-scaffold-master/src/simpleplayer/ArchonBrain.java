@@ -26,7 +26,7 @@ public class ArchonBrain implements Brain {
 			y+=loc.y;
 		}
 		if (locs.size() != 0){
-			return new MapLocation(x/(locs.size()+1), y/(locs.size()+1));
+			return new MapLocation(x/Math.max(1,(locs.size()+1)), y/Math.max(1,(locs.size()+1)));
 		}
 		else {
 			return null;
@@ -45,7 +45,8 @@ public class ArchonBrain implements Brain {
 		MapLocation start = rc.getLocation();
 		
 		try {
-			rc.broadcastSignal( 20000);//2*sightRange ); //maximize broadcast range without costing extra stuff
+//			rc.broadcastSignal(20000);//2*sightRange ); //maximize broadcast range without costing extra stuff
+			rc.broadcastSignal(100*100);//May as well broadcast the entire map.
 			Clock.yield();
 			
 			Signal[] signals = rc.emptySignalQueue();
