@@ -41,7 +41,31 @@ public class GuardBrain implements Brain {
 	}
 	public static void runTurn() throws GameActionException
 	{
+		MapLocation loc = rc.getLocation();
 		
+		MapLocation init = rc.getLocation();
+		boolean shouldAttack = false;
+		// If this robot type can attack, check for enemies within range and
+		// attack one
+		if (rc.getType().canAttack() && myAttackRange > 0) {
+			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
+			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
+			if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES MACHINES (PROBABLY WANT ZOMBIES BECAUSE THEY DOUBLE DAMAGE)
+				shouldAttack = true;
+				// Check if weapon is ready
+				if (rc.isWeaponReady()) {
+					rc.attackLocation(enemiesWithinRange[0].location);
+				}
+			} else if (zombiesWithinRange.length > 0) {
+				shouldAttack = true;
+				// Check if weapon is ready
+				if (rc.isWeaponReady()) {
+					rc.attackLocation(zombiesWithinRange[0].location);
+				}
+			}
+		}
+		if (!shouldAttack) {
+		}
 	}
 	
 }
