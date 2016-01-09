@@ -7,8 +7,15 @@ import battlecode.common.*;
 
 public class SoldierBrain implements Brain {
 
-	static RobotController rc;
-	static ArrayList<MapLocation> past = new ArrayList<MapLocation>();
+	private static RobotController rc;
+	private static ArrayList<MapLocation> past = new ArrayList<MapLocation>();
+	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
+			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
+	private static RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
+			RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
+	private static int myAttackRange = rc.getType().attackRadiusSquared;
+	private static Team myTeam = rc.getTeam();
+	private static Team enemyTeam = myTeam.opponent();
 
 	@Override
 	public void run(RobotController rcI) {
@@ -39,15 +46,6 @@ public class SoldierBrain implements Brain {
 	}
 
 	public static void runTurn() throws GameActionException {
-		
-		
-		Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
-				Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
-		RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
-				RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
-		int myAttackRange = rc.getType().attackRadiusSquared;
-		Team myTeam = rc.getTeam();
-		Team enemyTeam = myTeam.opponent();
 		MapLocation init = rc.getLocation();
 		boolean shouldAttack = false;
 		// If this robot type can attack, check for enemies within range and
@@ -75,11 +73,12 @@ public class SoldierBrain implements Brain {
 				Direction lowest = directions[0];
 				double L = rc.senseRubble(rc.getLocation().add(directions[0]));
 				for (int i = 0; i < 8; i++) {
-					Direction d = directions[i]; // prioritizes NORTH atm; either make it more random or take in data
+					Direction d = directions[i]; // prioritizes NORTH atm;
+													// either make it more
+													// random or take in data
 					MapLocation newLoc = rc.getLocation().add(d);
-					if (rc.canMove(d)
-							&& rc.senseRubble(newLoc) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
-						if (past.contains(newLoc)==false) {
+					if (rc.canMove(d) && rc.senseRubble(newLoc) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+						if (past.contains(newLoc) == false) {
 							move = true;
 							rc.move(d);
 							past.add(newLoc);
@@ -97,10 +96,10 @@ public class SoldierBrain implements Brain {
 				if (!move) {
 					rc.clearRubble(lowest);
 				}
-				
+
 			}
 		}
-		
+
 	}
 
 }

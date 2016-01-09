@@ -1,26 +1,22 @@
 package simpleplayer;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
-import battlecode.common.Clock;
-import battlecode.common.Direction;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
-import battlecode.common.RobotType;
-import battlecode.common.Signal;
+import java.util.*;
+import battlecode.common.*;
 
 public class ArchonBrain implements Brain {
 // still doesn't account for own location
 	private boolean firstRun = true;
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
-	
-	private MapLocation com(Collection<MapLocation> locs, MapLocation self){
-		int x = self.x;
-		int y = self.y;
+	private RobotController rc;
+	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
+			Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
+	private static RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
+			RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
+	private static int myAttackRange = 24;
+	private static int sightRange = 35;
+	private MapLocation com(Collection<MapLocation> locs){
+		int x = rc.getLocation().x;
+		int y = rc.getLocation().y;
 		for (MapLocation loc : locs){
 			x+=loc.x;
 			y+=loc.y;
@@ -34,14 +30,9 @@ public class ArchonBrain implements Brain {
 	}
 	
 	@Override
-	public void run(RobotController rc) {
-		Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
-				Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
-		RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
-				RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
-		Random rand = new Random(rc.getID());
-		int myAttackRange = 24;
-		int sightRange = 35;
+	public void run(RobotController rcI) {
+		rc=rcI;
+		
 		MapLocation start = rc.getLocation();
 		
 		try {
@@ -68,17 +59,16 @@ public class ArchonBrain implements Brain {
 						// IDK HOW TO GET ROBOT TYPE FROM SIGNALS
 					//}
 				}
-				MapLocation com = com(archonStarts.values(), start);
+				MapLocation com = com(archonStarts.values());
 				if (com.distanceSquaredTo(rc.getLocation()) <= 4) {
 					for (int i = 0; i< 8 ; i++){
-					}
-					if (numGuards <= 4 && rc.canBuild(Direction.SOUTH, RobotType.GUARD)){
-						rc.build(Direction.SOUTH, RobotType.GUARD);
+					if (numGuards <= 4 && rc.canBuild(directions[i], RobotType.GUARD)){
+						rc.build(directions[i], RobotType.GUARD);
 					}
 					if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){ // change it so the person can build more efficiently. Currently ONLY south
-						rc.build(Direction.SOUTH, RobotType.SOLDIER);
+						rc.build(directions[i], RobotType.SOLDIER);
 					}
-				
+					}
 					
 				}
 				else {
