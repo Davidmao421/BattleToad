@@ -59,16 +59,45 @@ public class ArchonBrain implements Brain {
 
 		while (true) {
 			try {
+				//rc.broadcastSignal(sightRange * 2); // free broadcasting ( should add to everything )
+				Signal[] signals = rc.emptySignalQueue();
+				int numGuards = 0;
+				for (Signal naw: signals){
+					//if (naw.){ //type = guard
+						//numGuards +=1;
+						// IDK HOW TO GET ROBOT TYPE FROM SIGNALS
+					//}
+				}
 				MapLocation com = com(archonStarts.values(), start);
 				if (com.distanceSquaredTo(rc.getLocation()) <= 4) {
-					if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){
+					for (int i = 0; i< 8 ; i++){
+					}
+					if (numGuards <= 4 && rc.canBuild(Direction.SOUTH, RobotType.GUARD)){
+						rc.build(Direction.SOUTH, RobotType.GUARD);
+					}
+					if (rc.canBuild(Direction.SOUTH, RobotType.SOLDIER)){ // change it so the person can build more efficiently. Currently ONLY south
 						rc.build(Direction.SOUTH, RobotType.SOLDIER);
 					}
 				
 					
 				}
 				else {
-					rc.move(rc.getLocation().directionTo(com));
+					int index=0;
+					for (int i = 0; i < 8;i++){
+						if (directions[i].equals(rc.getLocation().directionTo(com))){
+							index = i;
+						}
+					}
+					if (rc.canMove(rc.getLocation().directionTo(com))){
+						rc.move(rc.getLocation().directionTo(com));
+					}
+					else if (rc.canMove(directions[(index+1)%8])){
+						rc.move(directions[(index+1)%8]);
+					}
+					else{
+						rc.move(directions[(index-1)%8]);
+					}
+					
 				}
 				Clock.yield();
 			} catch (Exception e) {
