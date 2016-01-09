@@ -72,10 +72,8 @@ public class SoldierBrain implements Brain {
 				Boolean move = false;
 				Direction lowest = directions[0];
 				double L = rc.senseRubble(rc.getLocation().add(directions[0]));
-				for (int i = 0; i < 8; i++) {
-					Direction d = directions[i]; // prioritizes NORTH atm;
-													// either make it more
-													// random or take in data
+				for (int i = (int)( directions.length*Math.random()); i < i+directions.length; i++) {
+					Direction d = directions[i%8]; 
 					MapLocation newLoc = rc.getLocation().add(d);
 					if (rc.canMove(d) && rc.senseRubble(newLoc) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
 						if (past.contains(newLoc) == false) {
