@@ -56,7 +56,13 @@ public class ArchonBrain implements Brain {
 				// rc.broadcastSignal(sightRange * 2); // free broadcasting (
 				// should add to everything )
 				Signal[] signals = rc.emptySignalQueue();
+				RobotInfo[] nearby =  rc.senseNearbyRobots();
 				int numGuards = 0;
+				for (RobotInfo nej: nearby){
+					if (nej.type.equals(RobotType.GUARD)){
+						numGuards +=1;
+					}
+				}
 				MapLocation com = com(archonStarts.values());
 				if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
 					for (int i = 0; i < directions.length; i++) {
