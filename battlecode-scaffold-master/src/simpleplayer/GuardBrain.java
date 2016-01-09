@@ -1,6 +1,9 @@
 package simpleplayer;
 
+import java.util.LinkedList;
+
 import battlecode.common.*;
+import scala.Int;
 
 public class GuardBrain implements Brain {
 	private static RobotController rc;
@@ -65,6 +68,34 @@ public class GuardBrain implements Brain {
 			}
 		}
 		if (!shouldAttack) {
+			RobotInfo[] nearby = rc.senseNearbyRobots();
+			int numArchons = 0;
+			LinkedList<MapLocation> arcLoc = new LinkedList<MapLocation>();
+			for (RobotInfo naw : nearby){
+				if (naw.type.equals(RobotType.ARCHON)){
+					arcLoc.add(naw.location);
+					numArchons++;
+				}
+			}
+			int nearestArc = 0;
+			int shortestDistance = Int.MaxValue();
+			for (int i =0; i < arcLoc.size(); i++){
+				int distance = rc.getLocation().distanceSquaredTo(arcLoc.get(i));
+				if (distance<=shortestDistance){
+					shortestDistance = distance;
+					nearestArc = i;
+				}
+			}
+			if (shortestDistance < 4 ){
+				if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()))){
+					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation())); // still need to implement moving different ways/closer to archon
+				}
+			}
+			if (shortestDistance > 9){
+				if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)))){
+					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)));
+				}
+			}
 		}
 	}
 	
