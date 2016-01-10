@@ -57,7 +57,8 @@ public class ArchonBrain implements Brain {
 						break;
 					if (rc.canBuild(d, RobotType.GUARD)) {
 						rc.build(d, RobotType.GUARD);
-						numGuards++;
+//						numGuards++;
+						numGuards = 0;
 						rc.setIndicatorString(2, numGuards + " guards total");
 					}
 				}
@@ -72,7 +73,7 @@ public class ArchonBrain implements Brain {
 					if (robots.containsKey(info.ID) || info.team != rc.getTeam())
 						continue;
 					robots.put(info.ID, info.type);
-					rc.broadcastMessageSignal(SignalEncoder.encodeRobot(info.type, info.ID).getMessage()[0], 0, 70);
+					rc.broadcastMessageSignal(SignalEncoder.encodeRobot(info.type, info.ID, com).getMessage()[0], 0, 70);
 				}
 			} else {
 				rc.move(rc.getLocation().directionTo(com));

@@ -1,7 +1,6 @@
 package simpleplayer;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import battlecode.common.*;
 
@@ -10,8 +9,7 @@ public class SoldierBrain implements Brain {
 	private static ArrayList<MapLocation> past = new ArrayList<MapLocation>();
 	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
-	private static RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
-			RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
+
 
 	@Override
 	public void run(RobotController rc) {

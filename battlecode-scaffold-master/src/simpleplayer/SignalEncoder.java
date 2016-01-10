@@ -83,20 +83,28 @@ public class SignalEncoder {
 	}
 	
 	public static Signal encodeRobot(RobotIdTypePair pair){
-		return encodeRobot(pair.type, pair.id);
+		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
 
-	public static Signal encodeRobot(RobotType type, int id) {
+	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.NEW_ROBOT.header << 28;
 		part1 |= robotTypeToInt(type) << 24;
 		part1 |= id << 9;
+		part1 |= loc.x << 2;
+		part1 |= loc.y >> 5;
+		part2 |= (loc.y & 0x00000003) << 27;
 	
 		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL,part1, part2);
 	}
 	
 	public static RobotIdTypePair decodeRobot(Signal e){
-		return new RobotIdTypePair((e.getMessage()[0]&0x00ffffff)>>9, robotIntToType((0xf000000&e.getMessage()[0])>>24));
+		int id = (e.getMessage()[0]&0x00ffffff)>>9;
+		RobotType type = robotIntToType((0xf000000&e.getMessage()[0])>>24);
+		int x = (e.getMessage()[0] >> 2) & 0x0000007f;
+		int y = ((e.getMessage()[0] & 0x00000003) << 5) & (e.getMessage()[1] >> 27);
+		
+		return new RobotIdTypePair(id, type, new MapLocation(x, y));
 	}
 
 }
