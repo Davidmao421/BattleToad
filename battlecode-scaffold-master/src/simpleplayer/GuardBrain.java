@@ -58,13 +58,8 @@ public class GuardBrain implements Brain {
 			}
 		}
 		if (!shouldAttack) {
-			Signal[] signals = rc.emptySignalQueue();
-			for (Signal hej : signals){
-				if (hej.getMessage()[0] == rc.getID()){
-					archon = hej.getLocation();
-				}
-			}
-	/*		RobotInfo[] nearby = rc.senseNearbyRobots();
+			
+			RobotInfo[] nearby = rc.senseNearbyRobots();
 			int numArchons = 0;
 			LinkedList<MapLocation> arcLoc = new LinkedList<MapLocation>();
 			for (RobotInfo naw : nearby) {
@@ -81,7 +76,42 @@ public class GuardBrain implements Brain {
 					shortestDistance = distance;
 					nearestArc = i;
 				}
-			}*/
+			}
+			if (shortestDistance < 4 ){
+				if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()))) {
+					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()));
+				}
+				else if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft())){
+					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft());
+				}
+				else {
+					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight()); //TODO: we want it to decide between left/right randomly.
+				}
+			}
+			else if (shortestDistance >= 9) {
+				if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)))) {
+					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)));
+				}
+				else if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft())){
+					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft());
+				}
+				else if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight())){
+					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight());
+				}
+			}
+			else {
+				for (Direction x : Statics.directions)
+					if (rc.canMove(x)) {
+						rc.move(x);
+						break;
+					}
+			}
+	/*		Signal[] signals = rc.emptySignalQueue();
+			for (Signal hej : signals){
+				if (hej.getMessage()[0] == rc.getID()){
+					archon = hej.getLocation();
+				}
+			}
 			if (rc.getLocation().distanceSquaredTo(archon) <4) {
 				if (rc.canMove(archon.directionTo(rc.getLocation()))) {
 					rc.move(archon.directionTo(rc.getLocation())); 
@@ -92,6 +122,7 @@ public class GuardBrain implements Brain {
 					rc.move(rc.getLocation().directionTo(archon));
 				}
 			}
+			*/
 		}
 	}
 
