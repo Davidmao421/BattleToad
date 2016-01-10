@@ -9,7 +9,6 @@ import org.omg.CORBA.INITIALIZE;
 
 import battlecode.common.*;
 
-
 public class ArchonBrain implements Brain {
 	// still doesn't account for own location
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
@@ -22,14 +21,13 @@ public class ArchonBrain implements Brain {
 			x += loc.x;
 			y += loc.y;
 		}
-		return new MapLocation(x / Math.max(1, (locs.size() + 1)), y / Math.max(1, (locs.size() + 1)));
+		return new MapLocation(x / Math.max(locs.size(), 1), y / Math.max(1, locs.size()));
 
 	}
 
 	private void intialize(RobotController rc) {
 		try {
-
-			rc.broadcastSignal(20000);
+			rc.broadcastSignal(500);
 
 			Clock.yield();
 
@@ -47,22 +45,22 @@ public class ArchonBrain implements Brain {
 		try {
 			int numGuards = 0;
 
+			Signal[] signals = rc.emptySignalQueue();
+			for (Signal s : signals) {
+				RobotIdTypePair pair = SignalEncoder.decodeRobot(s);
+				if (robots.containsKey(pair.id))
+					continue;
+				robots.put(pair.id, pair.type);
+			}
+
 			MapLocation com = com(archonStarts.values());
+			rc.setIndicatorString(1, "("+com.x+", "+com.y+")");
 			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
 				for (Direction d : Direction.values()) {
 					if (numGuards > 4)
 						break;
 					if (rc.canBuild(d, RobotType.GUARD)) {
 						rc.build(d, RobotType.GUARD);
-						int guardID = 0;
-						battlecode.common.RobotInfo[] nearby = rc.senseNearbyRobots(1);
-						for (RobotInfo hej: nearby){
-							if (hej.type.equals(RobotType.GUARD)){
-								guardID = hej.ID;
-							}
-						}
-						int [] messageArray = SignalEncoder.encodeRobot(RobotType.GUARD, guardID).getMessage();
-						rc.broadcastMessageSignal(messageArray[0],messageArray[1],1);
 						numGuards++;
 						rc.setIndicatorString(2, numGuards + " guards total");
 					}
@@ -72,10 +70,16 @@ public class ArchonBrain implements Brain {
 						rc.build(d, RobotType.SOLDIER);
 					}
 				}
-//				rc.broadcastMessageSignal(message1, message2, radiusSquared);
+
+				RobotInfo[] nearby = rc.senseNearbyRobots();
+				for (RobotInfo info : nearby) {
+					if (robots.containsKey(info.ID) || info.team != rc.getTeam())
+						continue;
+					robots.put(info.ID, info.type);
+					rc.broadcastMessageSignal(SignalEncoder.encodeRobot(info.type, info.ID).getMessage()[0], 0, 70);
+				}
 			} else {
 				rc.move(rc.getLocation().directionTo(com));
-
 			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
