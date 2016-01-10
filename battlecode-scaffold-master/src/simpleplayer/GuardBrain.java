@@ -1,15 +1,9 @@
 package simpleplayer;
 
-import java.util.LinkedList;
-
 import battlecode.common.*;
-import scala.Int;
 
 public class GuardBrain implements Brain {
-	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
-			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
-	private static RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
-			RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
+
 	private static MapLocation archon = new MapLocation(0,0);
 	@Override
 	public void run(RobotController rc) {

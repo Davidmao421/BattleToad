@@ -3,9 +3,6 @@ package simpleplayer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
-
-import org.omg.CORBA.INITIALIZE;
 
 import battlecode.common.*;
 
@@ -13,7 +10,6 @@ public class ArchonBrain implements Brain {
 	// still doesn't account for own location
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
 	private Map<Integer, RobotType> robots = new HashMap<>(100);
-	private MapLocation start;
 
 	private MapLocation com(Collection<MapLocation> locs) {
 		int x, y = x = 0;

@@ -1,6 +1,5 @@
 package simpleplayer;
 
-import java.awt.Robot;
 
 import battlecode.common.MapLocation;
 import battlecode.common.RobotType;

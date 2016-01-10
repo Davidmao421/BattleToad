@@ -1,7 +1,6 @@
 package simpleplayer;
 
 import battlecode.common.RobotType;
-import battlecode.common.Team;
 
 public class RobotIdTypePair {
 	public int id;
