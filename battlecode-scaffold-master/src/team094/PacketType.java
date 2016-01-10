@@ -1,4 +1,4 @@
-package simpleplayer;
+package team094;
 
 public enum PacketType {
 	   ECHO(0),

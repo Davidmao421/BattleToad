@@ -1,4 +1,4 @@
-package simpleplayer;
+package team094;
 
 import java.util.*;
 import battlecode.common.*;
@@ -74,6 +74,9 @@ public class ArchonBrain implements Brain {
 					}			
 					dirs2[i++]=d;
 				}
+				for(; dirs.size()>0;i++)
+					dirs2[i] = dirs.remove((int)(dirs.size()*Math.random()));
+				
 				for (Direction d : dirs2) {
 					if (rc.canBuild(d, RobotType.SOLDIER)) {
 						rc.build(d, RobotType.SOLDIER);

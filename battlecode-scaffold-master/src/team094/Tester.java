@@ -1,6 +1,6 @@
-package simpleplayer;
+package team094;
 
-import simpleplayer.PacketType;
+import team094.PacketType;
 
 public class Tester {
 
