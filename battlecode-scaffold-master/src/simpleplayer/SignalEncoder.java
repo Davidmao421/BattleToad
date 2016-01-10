@@ -87,7 +87,7 @@ public class SignalEncoder {
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.NEW_ROBOT.header << 28;
 		part1 |= robotTypeToInt(type) << 24;
-		part1 |= id;
+		part1 |= id << 9;
 	
 		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL,part1, part2);
 	}
