@@ -82,6 +82,10 @@ public class SignalEncoder {
 		int i = ((e.getMessage()[0] & 0x00003fff) << 1) + ((e.getMessage()[1] & 0x80000000) >> 31);
 		return new Signal(l, i, e.getTeam());
 	}
+	
+	public static Signal encodeRobot(RobotIdTypePair pair){
+		return encodeRobot(pair.type, pair.id);
+	}
 
 	public static Signal encodeRobot(RobotType type, int id) {
 		int part1, part2 = part1 = 0;
