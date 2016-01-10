@@ -7,13 +7,8 @@ import java.util.Random;
 
 import org.omg.CORBA.INITIALIZE;
 
-import battlecode.common.Clock;
-import battlecode.common.Direction;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
-import battlecode.common.RobotType;
-import battlecode.common.Signal;
+import battlecode.common.*;
+
 
 public class ArchonBrain implements Brain {
 	// still doesn't account for own location
@@ -54,15 +49,24 @@ public class ArchonBrain implements Brain {
 
 			MapLocation com = com(archonStarts.values());
 			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
-//				for (Direction d : Direction.values()) {
-//					if (numGuards > 4)
-//						break;
-//					if (rc.canBuild(d, RobotType.GUARD)) {
-//						rc.build(d, RobotType.GUARD);
-//						numGuards++;
-//						rc.setIndicatorString(2, numGuards + " guards total");
-//					}
-//				}
+				for (Direction d : Direction.values()) {
+					if (numGuards > 4)
+						break;
+					if (rc.canBuild(d, RobotType.GUARD)) {
+						rc.build(d, RobotType.GUARD);
+						int guardID = 0;
+						battlecode.common.RobotInfo[] nearby = rc.senseNearbyRobots(1);
+						for (RobotInfo hej: nearby){
+							if (hej.type.equals(RobotType.GUARD)){
+								guardID = hej.ID;
+							}
+						}
+						int [] messageArray = SignalEncoder.encodeRobot(RobotType.GUARD, guardID).getMessage();
+						rc.broadcastMessageSignal(messageArray[0],messageArray[1],1);
+						numGuards++;
+						rc.setIndicatorString(2, numGuards + " guards total");
+					}
+				}
 				for (Direction d : Direction.values()) {
 					if (rc.canBuild(d, RobotType.SOLDIER)) {
 						rc.build(d, RobotType.SOLDIER);

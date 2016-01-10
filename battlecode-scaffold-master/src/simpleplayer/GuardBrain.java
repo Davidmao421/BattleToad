@@ -78,18 +78,10 @@ public class GuardBrain implements Brain {
 			}
 			if (shortestDistance < 4) {
 				if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()))) {
-					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation())); // still
-																					// need
-																					// to
-																					// implement
-																					// moving
-																					// different
-																					// ways/closer
-																					// to
-																					// archon
+					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation())); 
 				}
 			}
-			if (shortestDistance > 9) {
+			if (shortestDistance >= 9) {
 				if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)))) {
 					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)));
 				}
