@@ -54,15 +54,15 @@ public class ArchonBrain implements Brain {
 
 			MapLocation com = com(archonStarts.values());
 			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
-				for (Direction d : Direction.values()) {
-					if (numGuards > 4)
-						break;
-					if (rc.canBuild(d, RobotType.GUARD)) {
-						rc.build(d, RobotType.GUARD);
-						numGuards++;
-						rc.setIndicatorString(2, numGuards + " guards total");
-					}
-				}
+//				for (Direction d : Direction.values()) {
+//					if (numGuards > 4)
+//						break;
+//					if (rc.canBuild(d, RobotType.GUARD)) {
+//						rc.build(d, RobotType.GUARD);
+//						numGuards++;
+//						rc.setIndicatorString(2, numGuards + " guards total");
+//					}
+//				}
 				for (Direction d : Direction.values()) {
 					if (rc.canBuild(d, RobotType.SOLDIER)) {
 						rc.build(d, RobotType.SOLDIER);
