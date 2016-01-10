@@ -22,7 +22,7 @@ public class RobotPlayer {
 			break;
 
 		case GUARD:
-			brain = new SoldierBrain();
+			brain = new GuardBrain();
 			break;
 
 		default:
