@@ -17,52 +17,31 @@ import battlecode.common.Signal;
 
 public class ArchonBrain implements Brain {
 	// still doesn't account for own location
-	private boolean firstRun = true;
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
+	private Map<Integer, RobotType> robots = new HashMap<>(100);
+	private MapLocation start;
 
-	private MapLocation com(Collection<MapLocation> locs, MapLocation self) {
-		int x = self.x;
-		int y = self.y;
+	private MapLocation com(Collection<MapLocation> locs) {
+		int x, y = x = 0;
 		for (MapLocation loc : locs) {
 			x += loc.x;
 			y += loc.y;
 		}
-		if (locs.size() != 0) {
-			return new MapLocation(x / Math.max(1, (locs.size() + 1)), y / Math.max(1, (locs.size() + 1)));
-		} else {
-			return null;
-		}
-	}
+		return new MapLocation(x / Math.max(1, (locs.size() + 1)), y / Math.max(1, (locs.size() + 1)));
 
-	private MapLocation start;
+	}
 
 	private void intialize(RobotController rc) {
 		try {
 
-			Signal[] signals = rc.emptySignalQueue();
-			int numGuards = 0;
+			rc.broadcastSignal(20000);
 
-			MapLocation com = com(archonStarts.values(), start);
-			// TODO: make building occur in all directions.
-			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
-				for (Direction d : Direction.values()) {
-					if (numGuards < 4 && rc.canBuild(d, RobotType.GUARD)) {
-						rc.build(d, RobotType.GUARD);
-						numGuards++;
-						rc.setIndicatorString(2, numGuards + " guards total");
-					}
-				}
-				for (Direction d : Direction.values()) {
-
-					if (rc.canBuild(d, RobotType.SOLDIER)) {
-						rc.build(d, RobotType.SOLDIER);
-					}
-				}
-			} else {
-				rc.move(rc.getLocation().directionTo(com));
-
-			}
 			Clock.yield();
+
+			Signal[] signals = rc.emptySignalQueue();
+			for (Signal s : signals)
+				archonStarts.put(s.getID(), s.getLocation());
+
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
@@ -71,31 +50,29 @@ public class ArchonBrain implements Brain {
 
 	private void runTurn(RobotController rc) {
 		try {
-
-			Signal[] signals = rc.emptySignalQueue();
 			int numGuards = 0;
 
-			MapLocation com = com(archonStarts.values(), start);
-			// TODO: make building occur in all directions.
+			MapLocation com = com(archonStarts.values());
 			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
 				for (Direction d : Direction.values()) {
-					if (numGuards < 4 && rc.canBuild(d, RobotType.GUARD)) {
+					if (numGuards > 4)
+						break;
+					if (rc.canBuild(d, RobotType.GUARD)) {
 						rc.build(d, RobotType.GUARD);
 						numGuards++;
 						rc.setIndicatorString(2, numGuards + " guards total");
 					}
 				}
 				for (Direction d : Direction.values()) {
-
 					if (rc.canBuild(d, RobotType.SOLDIER)) {
 						rc.build(d, RobotType.SOLDIER);
 					}
 				}
+//				rc.broadcastMessageSignal(message1, message2, radiusSquared);
 			} else {
 				rc.move(rc.getLocation().directionTo(com));
 
 			}
-			Clock.yield();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
@@ -107,6 +84,7 @@ public class ArchonBrain implements Brain {
 		intialize(rc);
 
 		while (true) {
+			Clock.yield();
 			runTurn(rc);
 		}
 	}
