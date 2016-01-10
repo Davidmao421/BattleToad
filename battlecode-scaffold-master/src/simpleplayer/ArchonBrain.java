@@ -1,9 +1,6 @@
 package simpleplayer;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.*;
 import battlecode.common.*;
 
 public class ArchonBrain implements Brain {
@@ -57,8 +54,15 @@ public class ArchonBrain implements Brain {
 
 			MapLocation com = com(archonStarts.values());
 			rc.setIndicatorString(1, "("+com.x+", "+com.y+")");
-			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
-				for (Direction d : Direction.values()) {
+			if (!(com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com)))) {
+				rc.move(rc.getLocation().directionTo(com));
+			}
+			else {
+				ArrayList<Direction> dirs = new ArrayList<Direction>(Arrays.asList(Statics.directions));
+				Direction[] dirs2 = new Direction[dirs.size()];
+				int i=0;
+				while(dirs.size()>0){
+					Direction d=dirs.get((int)(8*Math.random()));
 					if (numGuards > 8)
 						break;
 					if (rc.canBuild(d, RobotType.GUARD)) {
@@ -66,9 +70,11 @@ public class ArchonBrain implements Brain {
 //						numGuards++;
 //						numGuards = 0;
 						rc.setIndicatorString(2, numGuards + " guards total");
-					}
+						break;
+					}			
+					dirs2[i++]=d;
 				}
-				for (Direction d : Direction.values()) {
+				for (Direction d : dirs2) {
 					if (rc.canBuild(d, RobotType.SOLDIER)) {
 						rc.build(d, RobotType.SOLDIER);
 					}
@@ -81,8 +87,6 @@ public class ArchonBrain implements Brain {
 					robots.put(info.ID, info.type);
 					rc.broadcastMessageSignal(SignalEncoder.encodeRobot(info.type, info.ID, com).getMessage()[0], 0, 70);
 				}
-			} else {
-				rc.move(rc.getLocation().directionTo(com));
 			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
