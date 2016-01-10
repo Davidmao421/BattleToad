@@ -81,22 +81,48 @@ public class GuardBrain implements Brain {
 				if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()))) {
 					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()));
 				}
-				else if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft())){
-					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft());
-				}
-				else {
-					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight()); //TODO: we want it to decide between left/right randomly.
+				else{
+					int rand = (int)(2 * Math.random());
+					boolean left = rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft());
+					boolean right = rc.canMove((arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight()));
+					if (left && right){
+						if (rand ==1){
+							rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft());
+						}
+						if (rand == 2){
+							rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight());
+						}
+					}
+					else if (left && !right){
+						rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft());
+					}
+					else if (right && !left){
+						rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight());
+					}
 				}
 			}
 			else if (shortestDistance >= 9) {
 				if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)))) {
 					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)));
 				}
-				else if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft())){
-					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft());
-				}
-				else if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight())){
-					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight());
+				else{
+					int rand = (int)(2 * Math.random());
+					boolean left = rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft());
+					boolean right = rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight());
+					if (left && right){
+						if (rand ==1){
+							rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft());
+						}
+						if (rand == 2){
+							rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight());
+						}
+					}
+					else if (left && !right){
+						rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateLeft());
+					}
+					else if (right && !left){
+						rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)).rotateRight());
+					}
 				}
 			}
 			else {
