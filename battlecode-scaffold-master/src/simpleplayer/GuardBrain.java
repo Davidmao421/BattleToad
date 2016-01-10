@@ -10,7 +10,7 @@ public class GuardBrain implements Brain {
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
 	private static RobotType[] robotTypes = { RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
 			RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET };
-
+	private static MapLocation archon = new MapLocation(0,0);
 	@Override
 	public void run(RobotController rc) {
 		intialize(rc);
@@ -58,7 +58,13 @@ public class GuardBrain implements Brain {
 			}
 		}
 		if (!shouldAttack) {
-			RobotInfo[] nearby = rc.senseNearbyRobots();
+			Signal[] signals = rc.emptySignalQueue();
+			for (Signal hej : signals){
+				if (hej.getMessage()[0] == rc.getID()){
+					archon = hej.getLocation();
+				}
+			}
+	/*		RobotInfo[] nearby = rc.senseNearbyRobots();
 			int numArchons = 0;
 			LinkedList<MapLocation> arcLoc = new LinkedList<MapLocation>();
 			for (RobotInfo naw : nearby) {
@@ -75,15 +81,15 @@ public class GuardBrain implements Brain {
 					shortestDistance = distance;
 					nearestArc = i;
 				}
-			}
-			if (shortestDistance < 4) {
-				if (rc.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()))) {
-					rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation())); 
+			}*/
+			if (rc.getLocation().distanceSquaredTo(archon) <4) {
+				if (rc.canMove(archon.directionTo(rc.getLocation()))) {
+					rc.move(archon.directionTo(rc.getLocation())); 
 				}
 			}
-			if (shortestDistance >= 9) {
-				if (rc.canMove(rc.getLocation().directionTo(arcLoc.get(nearestArc)))) {
-					rc.move(rc.getLocation().directionTo(arcLoc.get(nearestArc)));
+			if (rc.getLocation().distanceSquaredTo(archon) > 9) {
+				if (rc.canMove(rc.getLocation().directionTo(archon))) {
+					rc.move(rc.getLocation().directionTo(archon));
 				}
 			}
 		}
