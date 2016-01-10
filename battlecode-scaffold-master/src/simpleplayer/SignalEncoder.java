@@ -91,5 +91,9 @@ public class SignalEncoder {
 	
 		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL,part1, part2);
 	}
+	
+	public static RobotIdTypePair decodeRobot(Signal e){
+		return new RobotIdTypePair((e.getMessage()[0]&0x00ffffff)>>9, robotIntToType((0xf000000&e.getMessage()[0])>>24));
+	}
 
 }
