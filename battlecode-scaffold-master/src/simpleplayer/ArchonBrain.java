@@ -48,17 +48,23 @@ public class ArchonBrain implements Brain {
 					continue;
 				robots.put(pair.id, pair.type);
 			}
+			RobotInfo[] nearbyGuards =  rc.senseNearbyRobots();
+			for (RobotInfo nej: nearbyGuards){
+				if (nej.type.equals(RobotType.GUARD)){
+					numGuards +=1;
+				}
+			}
 
 			MapLocation com = com(archonStarts.values());
 			rc.setIndicatorString(1, "("+com.x+", "+com.y+")");
 			if (com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com))) {
 				for (Direction d : Direction.values()) {
-					if (numGuards > 4)
+					if (numGuards > 8)
 						break;
 					if (rc.canBuild(d, RobotType.GUARD)) {
 						rc.build(d, RobotType.GUARD);
 //						numGuards++;
-						numGuards = 0;
+//						numGuards = 0;
 						rc.setIndicatorString(2, numGuards + " guards total");
 					}
 				}
