@@ -4,14 +4,7 @@ import java.util.*;
 
 import battlecode.common.*;
 
-	public class CompareStuff{
-		
-		public static ArrayList toList(RobotInfo[] info)
-		{
-			return new ArrayList<RobotInfo>(Arrays.asList(info));
-
-		}
-		
+	public class CompareStuff{	
 		public static RobotInfo soldierCompare(RobotInfo[] enemies, RobotInfo[] zombies)
 		{
 			ArrayList<RobotInfo> allDZ = new ArrayList<RobotInfo>();
@@ -61,8 +54,6 @@ import battlecode.common.*;
 					return DZ;
 				}
 			}
-			
-			return null;
 		}
 		
 }
