@@ -85,7 +85,9 @@ public class SoldierBrain implements Brain {
 						closestDistance = rc.getLocation().distanceSquaredTo(i);
 					}
 				}
-			}
+			} // TODO: Finish Everything else
+			
+			
 			
 
 		}
