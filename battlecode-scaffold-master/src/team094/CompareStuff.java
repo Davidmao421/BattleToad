@@ -4,9 +4,62 @@ import java.util.*;
 
 import battlecode.common.*;
 
-	public class CompareStuff{	
+	public class CompareStuff{
+		public static boolean isInfected(RobotInfo r)
+		{
+			if(r.viperInfectedTurns>0||r.zombieInfectedTurns>0)
+				return true;
+			else
+				return false;
+		}
+		public static RobotInfo soldierCompare(RobotInfo[] enemies) //returns the enemy that does the most damage, and the lowest health if multiple
+		{
+			ArrayList<RobotInfo> allDE = new ArrayList<RobotInfo>();
+			RobotInfo DE = enemies[0];
+			for(RobotInfo i: enemies){
+				if(i.attackPower<DE.attackPower){
+					allDE.clear();;
+					DE=i;
+				}
+				else if(i.attackPower==DE.attackPower){
+					allDE.add(i);
+				}
+			}
+			RobotInfo HE = allDE.get(0);
+			for(RobotInfo i: allDE)
+			{
+				if(i.health<HE.health)
+					HE=i;
+			}
+			return HE;
+		}
 		public static RobotInfo soldierCompare(RobotInfo[] enemies, RobotInfo[] zombies)
 		{
+			RobotInfo[] all = new RobotInfo[enemies.length+zombies.length];
+			for(int i=0; i<enemies.length; i++)
+			{
+				all[i]=enemies[i];
+			}
+			for(int i=enemies.length; i<enemies.length+zombies.length; i++)
+			{
+				all[i]=zombies[i-enemies.length];
+			}
+			RobotInfo maxD=all[0];
+			for(RobotInfo r: all)
+			{
+				if(maxD.attackPower<r.attackPower)
+				{
+					maxD=r;
+				}
+				else if(maxD.attackPower==r.attackPower)
+					if(maxD.health>r.attackPower)
+						maxD=r;
+			}
+			return maxD;
+		}
+			
+			
+			/*
 			ArrayList<RobotInfo> allDZ = new ArrayList<RobotInfo>();
 			RobotInfo DZ = zombies[0];
 			for(RobotInfo i: zombies){
@@ -32,7 +85,7 @@ import battlecode.common.*;
 				ArrayList<RobotInfo> allDE = new ArrayList<RobotInfo>();
 				RobotInfo DE = enemies[0];
 				for(RobotInfo i: enemies){
-					if(i.attackPower<DZ.attackPower){
+					if(i.attackPower<DE.attackPower){
 						allDE.clear();;
 						DE=i;
 					}
@@ -40,12 +93,12 @@ import battlecode.common.*;
 						allDE.add(i);
 					}
 				}
-				/*RobotInfo HE = allDE.get(0);   //if we want to do stuff with the lowest health enemy
+				RobotInfo HE = allDE.get(0);   //if we want to do stuff with the lowest health enemy
 				for(RobotInfo i: allDE)
 				{
 					if(i.health<HE.health)
 						HE=i;
-				}*/
+				}
 				if (allDE.size()==1&&DE.attackPower>DZ.attackPower) //only attacks enemy if its stronger than zombie
 				{
 					return allDE.get(0);
@@ -53,7 +106,26 @@ import battlecode.common.*;
 				else {
 					return DZ;
 				}
+			} */
+		}
+		public static RobotInfo viperCompare(RobotInfo[] enemies, boolean kill) {
+			if(kill) { //prioritizes weakest zombie not infected to make quick kill
+				RobotInfo minH = enemies[0];
+				for(RobotInfo r: enemies) {
+					if(r.health<minH.health&&!isInfected(r))
+						minH=r;
+				}
+				return minH;
 			}
+			else { //prioritizes strongest zombie not infected
+				RobotInfo maxH = enemies[0];
+				for(RobotInfo r: enemies) {
+						if(r.health>maxH.health&&!isInfected(r))
+							maxH=r;
+				}
+					return maxH;
+			}
+				
 		}
 		
 }
