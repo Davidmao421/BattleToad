@@ -63,10 +63,10 @@ public class ArchonBrain implements Brain {
 				int i=0;
 				while(dirs.size()>0){
 					Direction d=dirs.get((int)(8*Math.random()));
-					if (numGuards > 8)
-						break;
-					if (rc.canBuild(d, RobotType.GUARD)) {
-						rc.build(d, RobotType.GUARD);
+//					if (numGuards < 8)
+//						break;
+					if (rc.canBuild(d, RobotType.SOLDIER)) {
+						rc.build(d, RobotType.SOLDIER);
 //						numGuards++;
 //						numGuards = 0;
 						rc.setIndicatorString(2, numGuards + " guards total");
@@ -77,11 +77,11 @@ public class ArchonBrain implements Brain {
 				for(; dirs.size()>0;i++)
 					dirs2[i] = dirs.remove((int)(dirs.size()*Math.random()));
 				
-				for (Direction d : dirs2) {
-					if (rc.canBuild(d, RobotType.SOLDIER)) {
-						rc.build(d, RobotType.SOLDIER);
-					}
-				}
+//				for (Direction d : dirs2) {
+//					if (rc.canBuild(d, RobotType.SOLDIER)) {
+//						rc.build(d, RobotType.SOLDIER);
+//					}
+//				}
 
 				RobotInfo[] nearby = rc.senseNearbyRobots();
 				for (RobotInfo info : nearby) {
