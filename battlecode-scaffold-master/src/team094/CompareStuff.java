@@ -107,7 +107,6 @@ import battlecode.common.*;
 					return DZ;
 				}
 			} */
-		}
 		public static RobotInfo viperCompare(RobotInfo[] enemies, boolean kill) {
 			if(kill) { //prioritizes weakest zombie not infected to make quick kill
 				RobotInfo minH = enemies[0];
