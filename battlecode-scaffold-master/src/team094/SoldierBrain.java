@@ -16,7 +16,7 @@ public class SoldierBrain implements Brain {
 	@Override
 	public void run(RobotController rc) {
 		intialize(rc);
-		if (Math.random()*10 < 5){
+		if (Math.random() < 0.5){
 			while (true) {
 				try{
 					runTurnGuard(rc);
