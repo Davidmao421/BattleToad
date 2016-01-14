@@ -232,7 +232,7 @@ public class SoldierBrain implements Brain {
 				shouldAttack = true;
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
-					RobotInfo lowestHealth = enemiesWithinRange[0];
+					/* RobotInfo lowestHealth = enemiesWithinRange[0];
 					RobotInfo closest = enemiesWithinRange[0];
 					for (RobotInfo r : enemiesWithinRange) {
 						if (lowestHealth.health > r.health)
@@ -241,16 +241,14 @@ public class SoldierBrain implements Brain {
 								.distanceSquaredTo(r.location))
 							closest = r;
 					}
-					rc.attackLocation(closest.location); // Attacks closest
-															// enemy, change to
-															// incorporate
-															// signals
-				}
+					rc.attackLocation(closest.location); */
+					rc.attackLocation(CompareStuff.soldierCompare(enemiesWithinRange).location);
+				} 
 			} else if (zombiesWithinRange.length > 0) {
 				shouldAttack = true;
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
-					RobotInfo lowestHealth = zombiesWithinRange[0];
+					/* RobotInfo lowestHealth = zombiesWithinRange[0];
 					RobotInfo closest = zombiesWithinRange[0];
 					for (RobotInfo r : zombiesWithinRange) {
 						if (lowestHealth.health > r.health)
@@ -259,10 +257,8 @@ public class SoldierBrain implements Brain {
 								.distanceSquaredTo(r.location))
 							closest = r;
 					}
-					rc.attackLocation(closest.location); // Attacks closest
-															// enemy, change to
-															// incorporate
-															// signals
+					rc.attackLocation(closest.location); */			
+					rc.attackLocation(CompareStuff.soldierCompare(zombiesWithinRange).location);
 				}
 			}
 		}
