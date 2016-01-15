@@ -13,9 +13,10 @@ public class SoldierBrain implements Brain {
 	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
 	private static ArrayList <MapLocation> targets = new ArrayList<MapLocation> ();
+	RobotController rc;
 	@Override
-	public void run(RobotController rc) {
-		intialize(rc);
+	public void run(RobotController inRc) {
+		rc=inRc;
 		if (Math.random() < 0.5){ //TODO: implement passing of integer to determine Soldier type
 			while (true) {
 				try{
@@ -45,28 +46,22 @@ public class SoldierBrain implements Brain {
 		int myAttackRange = rc.getType().attackRadiusSquared;
 		Team myTeam = rc.getTeam();
 		Team enemyTeam = myTeam.opponent();
-
 		boolean shouldAttack = false;
 		// If this robot type can attack, check for enemies within range and
 		// attack one
-		if (rc.getType().canAttack() && myAttackRange > 0) {
-			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
-			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
-													// MACHINES (PROBABLY WANT
-													// ZOMBIES BECAUSE THEY
-													// DOUBLE DAMAGE)
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(enemiesWithinRange[0].location);
-				}
-			} else if (zombiesWithinRange.length > 0) {
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(zombiesWithinRange[0].location);
-				}
+		RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
+		RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
+		if (enemiesWithinRange.length > 0) {
+			shouldAttack = true;
+			// Check if weapon is ready
+			if (rc.isWeaponReady()) {
+				rc.attackLocation(enemiesWithinRange[0].location);
+			}
+		} else if (zombiesWithinRange.length > 0) {
+			shouldAttack = true;
+			// Check if weapon is ready
+			if (rc.isWeaponReady()) {
+				rc.attackLocation(zombiesWithinRange[0].location);
 			}
 		}
 		if (!shouldAttack){
@@ -229,9 +224,11 @@ public class SoldierBrain implements Brain {
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			RobotInfo mvLoc = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
-			if( mvLoc!=null)
-				rc.move(mvLoc.location.directionTo(rc.getLocation()));
+			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+			if(!away.equals(null)) {
+				if(rc.isCoreReady()&&rc.canMove(away.location.directionTo(rc.getLocation())))
+					coolMethods.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()),rc);
+			}
 			else if (enemiesWithinRange.length > 0) {
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
