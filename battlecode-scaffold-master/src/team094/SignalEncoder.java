@@ -71,6 +71,18 @@ public class SignalEncoder {
 		switch ((s.getMessage()[0] & 0xf0000000) >> 24) {
 		case 0:
 			return PacketType.ECHO;
+		case 1:
+			return PacketType.ATTACK_ENEMY;
+		case 2:
+			return PacketType.PANIC;
+		case 3: 
+			return PacketType.PANIC_OVER;
+		case 4:
+			return PacketType.DEAD;
+		case 5:
+			return PacketType.CHANGE_SCHEME;
+		case 6:
+			return PacketType.LOCAL_ATTACK;
 		default:
 			return PacketType.OTHER;
 		}
@@ -86,7 +98,7 @@ public class SignalEncoder {
 		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
 
-	public static Signal encodeRobot(RobotType type, int id, MapLocation loc	) {
+	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.NEW_ROBOT.header << 28;
 		part1 |= robotTypeToInt(type) << 24;
@@ -106,5 +118,66 @@ public class SignalEncoder {
 		
 		return new RobotIdTypePair(id, type, new MapLocation(x, y));
 	}
+	
+	public static Signal attackEnemy(RobotIdTypePair pair){
+		return attackEnemy(pair.id,pair.loc);
+	}
+	
+	public static Signal attackEnemy(int enemyID, MapLocation loc){
+		int part1, part2 = part1 = 0;
+		part1 = PacketType.ATTACK_ENEMY.header << 28;
+		part1 |=  enemyID << 13;
+		part1 |= loc.x << 6;
+		part1 |= loc.y >> 1;
+		part2 = loc.y << 31;
+		return new Signal(loc,enemyID,Team.NEUTRAL,part1,part2);
+	}
+	
+	public static RobotIdTypePair decodeEnemy(Signal s){
+		int id = (s.getMessage()[0]&0x0fffffff) >> 13;
+		int x = (s.getMessage()[0]&0x000000ff) >> 6;
+		int y = (s.getMessage()[0]&0x0000003f) << 1;
+		y+= s.getMessage()[1]>>31;
+		return new RobotIdTypePair(id, null, new MapLocation(x, y));
+	}
+	
+	public static Signal encodePanic(int id, MapLocation... locs){
+		//TODO: 
+		return null;
+	}
+	
+	public static Panic decodePanic(Signal s){
+		//TODO:
+		return null;
+	}
 
+	public static Signal encodePanicOver(int id){
+		//TODO: 
+		return null;
+	}
+	
+	public static int decodePanicOver(Signal s){
+		//TODO:
+		return -1;
+	}
+	
+	public static Signal encodeDead(int id){
+		//TODO: 
+		return null;
+	}
+	
+	public static int decodeDead(Signal s){
+		//TODO:
+		return -1;
+	}
+	
+	public static Signal encodeChangeScheme(Scheme s){
+		//TODO: 
+		return null;
+	}
+	
+	public static Scheme decodeChangeScheme(Signal s){
+		//TODO:
+		return null;
+	}
 }
