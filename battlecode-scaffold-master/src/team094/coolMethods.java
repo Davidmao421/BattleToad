@@ -30,7 +30,29 @@ public class coolMethods {
 		}
 		return false;
 	}
-
+	protected static void moveTo(Direction direction, RobotController rc) throws GameActionException {
+		try {
+		for (int i = 0; i < 2; i++) {
+			if (rc.canMove(direction)) {
+				rc.move(direction);
+			}
+			if (rc.getID() % 2 == 0) {
+				direction = direction.rotateLeft();
+			} else {
+				direction = direction.rotateRight();
+			}
+		}
+		if (rc.getType().canClearRubble()) {
+			// failed to move, look to clear rubble
+			MapLocation ahead = rc.getLocation().add(direction);
+			if (rc.senseRubble(ahead) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+				rc.clearRubble(direction);
+			}
+		}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
 	protected static MapLocation averageLocation(RobotInfo[] robotArray) {
 		int xpos = 0, ypos = 0;
 		for (RobotInfo friend : robotArray) {

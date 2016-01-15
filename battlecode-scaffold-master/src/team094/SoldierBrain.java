@@ -48,24 +48,19 @@ public class SoldierBrain implements Brain {
 		boolean shouldAttack = false;
 		// If this robot type can attack, check for enemies within range and
 		// attack one
-		if (rc.getType().canAttack() && myAttackRange > 0) {
-			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
-			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
-													// MACHINES (PROBABLY WANT
-													// ZOMBIES BECAUSE THEY
-													// DOUBLE DAMAGE)
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(enemiesWithinRange[0].location);
-				}
-			} else if (zombiesWithinRange.length > 0) {
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(zombiesWithinRange[0].location);
-				}
+		RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
+		RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
+		if (enemiesWithinRange.length > 0) {
+			shouldAttack = true;
+			// Check if weapon is ready
+			if (rc.isWeaponReady()) {
+				rc.attackLocation(enemiesWithinRange[0].location);
+			}
+		} else if (zombiesWithinRange.length > 0) {
+			shouldAttack = true;
+			// Check if weapon is ready
+			if (rc.isWeaponReady()) {
+				rc.attackLocation(zombiesWithinRange[0].location);
 			}
 		}
 		if (!shouldAttack){
@@ -228,8 +223,11 @@ public class SoldierBrain implements Brain {
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if(!CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).equals(null))
-				rc.move(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()));
+			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+			if(!away.equals(null)) {
+				if(rc.isCoreReady()&&rc.canMove(away.location.directionTo(rc.getLocation())))
+					coolMethods.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()),rc);
+			}
 			else if (enemiesWithinRange.length > 0) {
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
