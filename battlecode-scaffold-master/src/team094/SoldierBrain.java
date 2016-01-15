@@ -13,9 +13,10 @@ public class SoldierBrain implements Brain {
 	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
 	private static ArrayList <MapLocation> targets = new ArrayList<MapLocation> ();
+	RobotController rc;
 	@Override
-	public void run(RobotController rc) {
-		intialize(rc);
+	public void run(RobotController inRc) {
+		rc=inRc;
 		if (Math.random() < 0.5){ //TODO: implement passing of integer to determine Soldier type
 			while (true) {
 				try{
