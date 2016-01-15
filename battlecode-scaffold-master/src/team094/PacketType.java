@@ -9,6 +9,7 @@ public enum PacketType {
 	   DEAD(5),
 	   CHANGE_SCHEME(6),
 	   LOCAL_ATTACK(7),
+	   PARTS_CACHE(8),
 	    OTHER(31);
 
 	    public final int header;

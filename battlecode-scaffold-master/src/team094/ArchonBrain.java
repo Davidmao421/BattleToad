@@ -133,6 +133,8 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn(RobotController rc) throws GameActionException {
+		if (!rc.isCoreReady())
+			return;
 		switch (current) {
 		case CHARGE:
 			break;
