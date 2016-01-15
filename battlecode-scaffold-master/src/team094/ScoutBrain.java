@@ -20,7 +20,7 @@ public class ScoutBrain implements Brain {
         enemyTeam = myTeam.opponent();
 		rnd = new Random(rc.getID());
 		while(true){
-			scoutcode(rc);
+	//		scoutcode(rc);
 			Clock.yield();
 		}
 	}
@@ -44,7 +44,7 @@ public class ScoutBrain implements Brain {
 			mLBIndex++;
 			if(mLBIndex == mLB.length){
 				mLBIndex = 0;
-				messageback(rc);
+				//messageback(rc);
 			}
 		}
 		for(RobotInfo zombie: enemies){
@@ -59,7 +59,7 @@ public class ScoutBrain implements Brain {
 			}
 			if(mLBIndex == mLB.length){
 				mLBIndex = 0;
-				messageback(rc);
+				//messageback(rc);
 			}
 		}
 		for(RobotInfo neutral: neutrals){
@@ -70,7 +70,7 @@ public class ScoutBrain implements Brain {
 			mLB[mLBIndex] = neutral.location;
 			mLBIndex++;
 			if(mLBIndex == mLB.length){
-				messageback(rc);
+				//messageback(rc);
 			}
 		}
 		
@@ -98,7 +98,7 @@ public class ScoutBrain implements Brain {
 			}
 		}	
 	}
-	private static void messageback(RobotController rc) {
-		rc.broadcastMessageSignal(message1, message2, radiusSquared);
+	private static void messageback(RobotController rc, MapLocation mapLoc, int type) {
+		//rc.broadcastMessageSignal(message1, message2, radiusSquared);
 	}
 }

@@ -86,7 +86,7 @@ public class SignalEncoder {
 		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
 
-	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
+	public static Signal encodeRobot(RobotType type, int id, MapLocation loc	) {
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.NEW_ROBOT.header << 28;
 		part1 |= robotTypeToInt(type) << 24;
