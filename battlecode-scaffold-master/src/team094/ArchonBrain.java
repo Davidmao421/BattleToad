@@ -84,7 +84,7 @@ public class ArchonBrain implements Brain {
 						rc.setIndicatorString(2, numGuards + " guards total");
 						break;
 					}			
-					dirs2[i++]=d;
+					dirs2[i++%8]=d;
 				}
 				for(; dirs.size()>0;i++)
 					dirs2[i] = dirs.remove((int)(dirs.size()*Math.random()));

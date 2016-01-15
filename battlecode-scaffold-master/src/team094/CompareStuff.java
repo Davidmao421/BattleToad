@@ -135,14 +135,17 @@ import battlecode.common.*;
 		public static RobotInfo moveAwayFrom(RobotInfo[] enemies, MapLocation myLoc) {
 			RobotInfo maxMove = null;
 			double maxD = 0;
-			for(RobotInfo r: enemies) {
-				if(r.type.attackRadiusSquared>r.location.distanceSquaredTo(myLoc)&&Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc))>maxD) //TODO: possibly allow for moving away from non zombies
-				{
-					maxMove=r;
-					maxD=Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc));
+			if(enemies!=null) {
+				for(RobotInfo r: enemies) {
+					if(r.type.attackRadiusSquared>r.location.distanceSquaredTo(myLoc)&&Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc))>maxD) //TODO: possibly allow for moving away from non zombies
+					{
+						maxMove=r;
+						maxD=Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc));
+					}
 				}
+				return maxMove;
 			}
-			return maxMove;
+			return null;			
 		}
 		
 }

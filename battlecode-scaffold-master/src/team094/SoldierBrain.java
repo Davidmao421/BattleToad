@@ -229,8 +229,9 @@ public class SoldierBrain implements Brain {
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if(!CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).equals(null))
-				rc.move(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()));
+			RobotInfo mvLoc = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+			if( mvLoc!=null)
+				rc.move(mvLoc.location.directionTo(rc.getLocation()));
 			else if (enemiesWithinRange.length > 0) {
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
