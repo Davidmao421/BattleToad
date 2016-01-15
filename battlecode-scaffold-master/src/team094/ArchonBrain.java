@@ -1,6 +1,5 @@
 package team094;
 
-import java.awt.Robot;
 import java.util.*;
 import battlecode.common.*;
 
@@ -77,29 +76,21 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenge(RobotController rc) throws GameActionException {
-		if (turns > 5) {
-			turns = 0;
+
+		MapLocation[] potential =  rc.sensePartLocations(BROADCAST_RANGE);
+
+		
+		if (potential.length == 0 || turns !=1){
+			setRoutine(Routine.RANDOM);
+			randomlyMove(rc);
 			return;
 		}
-
-		ArrayList<Direction> potential = new ArrayList<>();
-		double maxParts = 0;
-		for (int i = 0; i < Statics.directions.length; i++) {
-			double parts = rc.senseParts(rc.getLocation().add(Statics.directions[i]));
-			if (parts == maxParts)
-				if (rc.canMove(Statics.directions[i]))
-					potential.add(Statics.directions[i]);
-
-				else if (parts > maxParts) {
-					maxParts = parts;
-					if (rc.canMove(Statics.directions[i])) {
-						potential.clear();
-						potential.add(Statics.directions[i]);
-					}
-				}
+		
+		_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), potential));
+		if (rc.canMove(_moveDirection)){
+			rc.move(_moveDirection);
+			return;
 		}
-		if (potential.size() > 0)
-			rc.move(potential.get((int) (Math.random() * potential.size())));
 
 	}
 	
