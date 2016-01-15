@@ -35,27 +35,30 @@ import battlecode.common.*;
 		}
 		public static RobotInfo soldierCompare(RobotInfo[] enemies, RobotInfo[] zombies)
 		{
-			RobotInfo[] all = new RobotInfo[enemies.length+zombies.length];
-			for(int i=0; i<enemies.length; i++)
-			{
-				all[i]=enemies[i];
-			}
-			for(int i=enemies.length; i<enemies.length+zombies.length; i++)
-			{
-				all[i]=zombies[i-enemies.length];
-			}
-			RobotInfo maxD=all[0];
-			for(RobotInfo r: all)
-			{
-				if(maxD.attackPower<r.attackPower)
+			if(enemies.length+zombies.length>0) {
+				RobotInfo[] all = new RobotInfo[enemies.length+zombies.length];
+				for(int i=0; i<enemies.length; i++)
 				{
-					maxD=r;
+					all[i]=enemies[i];
 				}
-				else if(maxD.attackPower==r.attackPower)
-					if(maxD.health>r.attackPower)
+				for(int i=enemies.length; i<enemies.length+zombies.length; i++)
+				{
+					all[i]=zombies[i-enemies.length];
+				}
+				RobotInfo maxD=all[0];
+				for(RobotInfo r: all)
+				{
+					if(maxD.attackPower<r.attackPower)
+					{
 						maxD=r;
+					}
+					else if(maxD.attackPower==r.attackPower)
+						if(maxD.health>r.attackPower)
+							maxD=r;
+				}
+				return maxD;
 			}
-			return maxD;
+			return null;
 		}
 			
 			
@@ -108,23 +111,38 @@ import battlecode.common.*;
 				}
 			} */
 		public static RobotInfo viperCompare(RobotInfo[] enemies, boolean kill) {
-			if(kill) { //prioritizes weakest zombie not infected to make quick kill
-				RobotInfo minH = enemies[0];
-				for(RobotInfo r: enemies) {
-					if(r.health<minH.health&&!isInfected(r))
-						minH=r;
+			if(enemies.length>0) {
+				if(kill) { //prioritizes weakest zombie not infected to make quick kill
+					RobotInfo minH = enemies[0];
+					for(RobotInfo r: enemies) {
+						if(r.health<minH.health&&!isInfected(r))
+							minH=r;
+					}
+					return minH;
 				}
-				return minH;
-			}
-			else { //prioritizes strongest zombie not infected
-				RobotInfo maxH = enemies[0];
-				for(RobotInfo r: enemies) {
-						if(r.health>maxH.health&&!isInfected(r))
-							maxH=r;
+				else { //prioritizes strongest zombie not infected
+					RobotInfo maxH = enemies[0];
+					for(RobotInfo r: enemies) {
+							if(r.health>maxH.health&&!isInfected(r))
+								maxH=r;
+					}
+						return maxH;
 				}
-					return maxH;
 			}
-				
+			return null;
+		}
+		
+		public static RobotInfo moveAwayFrom(RobotInfo[] enemies, MapLocation myLoc) {
+			RobotInfo maxMove = null;
+			double maxD = 0;
+			for(RobotInfo r: enemies) {
+				if(r.type.attackRadiusSquared>r.location.distanceSquaredTo(myLoc)&&Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc))>maxD) //TODO: possibly allow for moving away from non zombies
+				{
+					maxMove=r;
+					maxD=Math.sqrt(r.type.attackRadiusSquared)-Math.sqrt(r.location.distanceSquaredTo(myLoc));
+				}
+			}
+			return maxMove;
 		}
 		
 }

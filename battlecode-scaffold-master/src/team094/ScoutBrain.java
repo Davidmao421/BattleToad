@@ -6,7 +6,7 @@ import java.util.Random;
 import battlecode.common.*;
 
 public class ScoutBrain implements Brain {
-	static LocationInfo[][] hashmap = new LocationInfo[100][100];
+	static LocationInfo[][] hashmap = new LocationInfo[Statics.maxCord][Statics.maxCord];
 	static MapLocation[] mLB = new MapLocation[4];
 	static int mLBIndex = 0;
 	static Random rnd;
@@ -36,10 +36,10 @@ public class ScoutBrain implements Brain {
 		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(),-1);
 		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, enemyTeam);
 		for(MapLocation loc: partsLoc){
-			if(hashmap[(loc.x+16000)%100][(loc.y+16000)%100]!=null){
+			if(hashmap[(loc.x+16000)%Statics.maxCord][(loc.y+16000)%Statics.maxCord]!=null){
 				continue;
 			}
-			hashmap[(loc.x+16000)%100][(loc.y+16000)%100]=new LocationInfo(loc, null, rc.senseParts(loc), rc.senseRubble(loc), 0);
+			hashmap[(loc.x+16000)%Statics.maxCord][(loc.y+16000)%Statics.maxCord]=new LocationInfo(loc, null, rc.senseParts(loc), rc.senseRubble(loc), 0);
 			mLB[mLBIndex] = loc;
 			mLBIndex++;
 			if(mLBIndex == mLB.length){
@@ -49,10 +49,10 @@ public class ScoutBrain implements Brain {
 		}
 		for(RobotInfo zombie: enemies){
 			if(zombie.type == RobotType.ZOMBIEDEN){
-				if(hashmap[(zombie.location.x+16000)%100][(zombie.location.y+16000)%100]!=null){
+				if(hashmap[(zombie.location.x+16000)%Statics.maxCord][(zombie.location.y+16000)%Statics.maxCord]!=null){
 					continue;
 				}
-				hashmap[(zombie.location.x+16000)%100][(zombie.location.y+16000)%100]=new LocationInfo(zombie.location, zombie, 0, rc.senseRubble(zombie.location), 0);
+				hashmap[(zombie.location.x+16000)%Statics.maxCord][(zombie.location.y+16000)%Statics.maxCord]=new LocationInfo(zombie.location, zombie, 0, rc.senseRubble(zombie.location), 0);
 				mLB[mLBIndex] = zombie.location;
 				mLBIndex = 0;
 				mLBIndex++;
@@ -63,10 +63,10 @@ public class ScoutBrain implements Brain {
 			}
 		}
 		for(RobotInfo neutral: neutrals){
-			if(hashmap[(neutral.location.x+16000)%100][(neutral.location.y+16000)%100]!=null){
+			if(hashmap[(neutral.location.x+16000)%Statics.maxCord][(neutral.location.y+16000)%Statics.maxCord]!=null){
 				continue;
 			}
-			hashmap[(neutral.location.x+16000)%100][(neutral.location.y+16000)%100]=new LocationInfo(neutral.location, neutral, 0, rc.senseRubble(neutral.location), 0);
+			hashmap[(neutral.location.x+16000)%Statics.maxCord][(neutral.location.y+16000)%Statics.maxCord]=new LocationInfo(neutral.location, neutral, 0, rc.senseRubble(neutral.location), 0);
 			mLB[mLBIndex] = neutral.location;
 			mLBIndex++;
 			if(mLBIndex == mLB.length){

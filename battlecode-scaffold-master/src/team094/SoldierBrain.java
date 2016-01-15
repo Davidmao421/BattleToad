@@ -16,7 +16,7 @@ public class SoldierBrain implements Brain {
 	@Override
 	public void run(RobotController rc) {
 		intialize(rc);
-		if (Math.random() < 0.5){
+		if (Math.random() < 0.5){ //TODO: implement passing of integer to determine Soldier type
 			while (true) {
 				try{
 					runTurnGuard(rc);
@@ -228,10 +228,12 @@ public class SoldierBrain implements Brain {
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if (enemiesWithinRange.length > 0) {
-				shouldAttack = true;
+			if(!CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).equals(null))
+				rc.move(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()));
+			else if (enemiesWithinRange.length > 0) {
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
+					shouldAttack = true;
 					/* RobotInfo lowestHealth = enemiesWithinRange[0];
 					RobotInfo closest = enemiesWithinRange[0];
 					for (RobotInfo r : enemiesWithinRange) {
@@ -244,10 +246,11 @@ public class SoldierBrain implements Brain {
 					rc.attackLocation(closest.location); */
 					rc.attackLocation(CompareStuff.soldierCompare(enemiesWithinRange).location);
 				} 
-			} else if (zombiesWithinRange.length > 0) {
-				shouldAttack = true;
+			}
+			else if (zombiesWithinRange.length > 0) {				
 				// Check if weapon is ready
 				if (rc.isWeaponReady()) {
+					shouldAttack = true;
 					/* RobotInfo lowestHealth = zombiesWithinRange[0];
 					RobotInfo closest = zombiesWithinRange[0];
 					for (RobotInfo r : zombiesWithinRange) {
@@ -261,7 +264,6 @@ public class SoldierBrain implements Brain {
 					rc.attackLocation(CompareStuff.soldierCompare(zombiesWithinRange).location);
 				}
 			}
-		}
 		if (!shouldAttack) {
 			if (rc.isCoreReady()) {
 				Boolean move = false;
@@ -272,13 +274,13 @@ public class SoldierBrain implements Brain {
 					MapLocation newLoc = rc.getLocation().add(d);
 					if (rc.canMove(d) && rc.senseRubble(newLoc) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
 						if (past.contains(newLoc) == false) {
-							move = true;
-							rc.move(d);
-							past.add(newLoc);
-							if (past.size() > 20) {
-								past.remove(0);
-							}
-							break;
+								move = true;
+								rc.move(d);
+								past.add(newLoc);
+								if (past.size() > 20) {
+									past.remove(0);
+								}
+								break;
 						}
 					} else {
 						if (rc.senseRubble(rc.getLocation().add(d)) < L) {
@@ -291,8 +293,7 @@ public class SoldierBrain implements Brain {
 				}
 
 			}
+		}	
 		}
-
-	}
-
+}
 }

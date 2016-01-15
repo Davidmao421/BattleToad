@@ -6,8 +6,10 @@ import battlecode.common.*;
 public class ArchonBrain implements Brain {
 	// still doesn't account for own location
 	private Map<Integer, MapLocation> archonStarts = new HashMap<>(6);
+	private ArrayList<MapLocation> archons = new ArrayList<MapLocation>(4);
 	private Map<Integer, RobotType> robots = new HashMap<>(100);
-
+	private RobotController rc;
+	
 	private MapLocation com(Collection<MapLocation> locs) {
 		int x, y = x = 0;
 		for (MapLocation loc : locs) {
@@ -17,24 +19,33 @@ public class ArchonBrain implements Brain {
 		return new MapLocation(x / Math.max(locs.size(), 1), y / Math.max(1, locs.size()));
 
 	}
+	private MapLocation com(ArrayList<MapLocation> locs)
+	{
+		int x, y = x = 0;
+		for(MapLocation loc: locs) {
+			x += loc.x;
+			y += loc.y;
+		}
+		return new MapLocation(x / Math.max(locs.size(), 1), y / Math.max(1, locs.size()));
+	}
 
-	private void intialize(RobotController rc) {
+	private void intialize() {
 		try {
-			rc.broadcastSignal(500);
+			//rc.broadcastSignal(500);
 
-			Clock.yield();
+			//Clock.yield();
 
-			Signal[] signals = rc.emptySignalQueue();
-			for (Signal s : signals)
-				archonStarts.put(s.getID(), s.getLocation());
-
+			archons = new ArrayList<MapLocation>(Arrays.asList(rc.getInitialArchonLocations(rc.getTeam())));
+			/*for (MapLocation s : archons)
+				archonStarts.put(s.getID(), s.getLocation());*/
+			rc.setIndicatorString(1, "initialized");
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	private void runTurn(RobotController rc) {
+	private void runTurn() {
 		try {
 			int numGuards = 0;
 
@@ -43,7 +54,8 @@ public class ArchonBrain implements Brain {
 				RobotIdTypePair pair = SignalEncoder.decodeRobot(s);
 				if (robots.containsKey(pair.id))
 					continue;
-				robots.put(pair.id, pair.type);
+				else
+					robots.put(pair.id, pair.type);
 			}
 			RobotInfo[] nearbyGuards =  rc.senseNearbyRobots();
 			for (RobotInfo nej: nearbyGuards){
@@ -52,9 +64,10 @@ public class ArchonBrain implements Brain {
 				}
 			}
 
-			MapLocation com = com(archonStarts.values());
+			//MapLocation com = com(archonStarts.values());
+			MapLocation com = com(archons);
 			rc.setIndicatorString(1, "("+com.x+", "+com.y+")");
-			if (!(com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com)))) {
+			if (!(com.distanceSquaredTo(rc.getLocation()) <= 4 || !rc.canMove(rc.getLocation().directionTo(com)))) { //TODO: possibly make distance some other stuff
 				rc.move(rc.getLocation().directionTo(com));
 			}
 			else {
@@ -98,12 +111,13 @@ public class ArchonBrain implements Brain {
 	}
 
 	@Override
-	public void run(RobotController rc) {
-		intialize(rc);
+	public void run(RobotController rc1) {
+		rc1=rc;
+		intialize();
 
 		while (true) {
 			Clock.yield();
-			runTurn(rc);
+			runTurn();
 		}
 	}
 
