@@ -19,6 +19,10 @@ public class ArchonBrain implements Brain {
 		last = current;
 		current = r;
 	}
+	
+	private boolean canBuild(RobotController rc, RobotType type, Direction dir){
+		return rc.canBuild(dir, type) && rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH;
+	}
 
 	private boolean buildRobot(RobotController rc, RobotType type) throws GameActionException {
 		ArrayList<Direction> list = new ArrayList<>(Arrays.asList(Statics.directions));
@@ -28,7 +32,7 @@ public class ArchonBrain implements Brain {
 			return false;
 		}
 		for (int i = 0; list.size() > 0; i++) {
-			if (rc.canBuild(list.get(i), type)) {
+			if (canBuild(rc,type, list.get((int) (Math.random()*list.size())))) {
 				try {
 					rc.build(list.get(i), type);
 					return true;
@@ -99,6 +103,7 @@ public class ArchonBrain implements Brain {
 		if (turns > 5){
 			_moveDirection = null;
 			turns = 0;
+			setRoutine(Routine.NONE);
 			return;
 		}
 		
@@ -157,6 +162,36 @@ public class ArchonBrain implements Brain {
 		default:
 			break;
 		}
+		
+		
+		//DEBUG
+		String s = "";
+		switch(current){
+		case CHARGE:
+			s = "charge";
+			break;
+		case NONE:
+			s = "none";
+			break;
+		case RANDOM:
+			s = "random";
+			break;
+		case SCAVENGE:
+			s = "scavenge";
+			break;
+		case SCOUT:
+			s = "scout";
+			break;
+		case TURRET_CLUSTER:
+			s = "turret cluster";
+			break;
+		default:
+			s = "fuck";
+			break;
+		
+		}
+		rc.setIndicatorString(1, s);
+//		System.out.println(s);
 	}
 
 	@Override

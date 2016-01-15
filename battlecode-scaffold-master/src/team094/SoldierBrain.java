@@ -225,7 +225,7 @@ public class SoldierBrain implements Brain {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
 			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
-			if(!away.equals(null)) {
+			if(away!=null) {
 				if(rc.isCoreReady()&&rc.canMove(away.location.directionTo(rc.getLocation())))
 					coolMethods.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location.directionTo(rc.getLocation()),rc);
 			}
