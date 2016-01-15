@@ -8,7 +8,8 @@ import battlecode.common.MapLocation;
 public class Statics {
 
 	public static Direction[] directions = Direction.values();
-<<<<<<< HEAD
+	
+	public static int maxCord = 80;
 
 	public static int sqrDist(MapLocation loc1 , MapLocation loc2){
 		return (loc1.x-loc2.x)*(loc1.x-loc2.x) + (loc1.y-loc2.y)*(loc1.y-loc2.y);
@@ -26,8 +27,6 @@ public class Statics {
 		}
 		return closest;
 	}
-=======
-	public static int maxCord = 80;
->>>>>>> master
+
 	
 }
