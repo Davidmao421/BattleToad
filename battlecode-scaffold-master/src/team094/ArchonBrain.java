@@ -112,7 +112,7 @@ public class ArchonBrain implements Brain {
 
 	@Override
 	public void run(RobotController rc1) {
-		rc1=rc;
+		rc = rc1;
 		intialize();
 
 		while (true) {

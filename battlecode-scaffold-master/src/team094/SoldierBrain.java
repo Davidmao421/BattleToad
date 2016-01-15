@@ -44,7 +44,6 @@ public class SoldierBrain implements Brain {
 		int myAttackRange = rc.getType().attackRadiusSquared;
 		Team myTeam = rc.getTeam();
 		Team enemyTeam = myTeam.opponent();
-
 		boolean shouldAttack = false;
 		// If this robot type can attack, check for enemies within range and
 		// attack one

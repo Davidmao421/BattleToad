@@ -99,6 +99,6 @@ public class ScoutBrain implements Brain {
 		}	
 	}
 	private static void messageback(RobotController rc, MapLocation mapLoc, int type) {
-		//rc.broadcastMessageSignal(message1, message2, radiusSquared);
+		//rc.broadcastMessageSignal(message1, message2, radiusSquared); //TODO: HAve to not suck dick
 	}
 }
