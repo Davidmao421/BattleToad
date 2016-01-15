@@ -24,11 +24,16 @@ public class RobotPlayer {
 		case GUARD:
 			brain = new GuardBrain();
 			break;
-
+		
+		case SCOUT:
+			brain = new ScoutBrain();
+			break;
+			
 		default:
 			break;
 		}
 
 		brain.run(rc);
 	}
+	
 }
