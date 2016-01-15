@@ -24,7 +24,7 @@ public class SoldierBrain implements Brain {
 				}catch(Exception e){
 					e.printStackTrace();
 				}
-		}
+			}
 		}
 		else{
 			while (true) {
@@ -39,6 +39,7 @@ public class SoldierBrain implements Brain {
 	}
 
 	public void intialize(RobotController rc) {
+		
 	}
 	public static void runTurnPack(RobotController rc) throws GameActionException {
 		int myAttackRange = rc.getType().attackRadiusSquared;
