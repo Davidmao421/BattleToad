@@ -145,9 +145,9 @@ public class SoldierBrain implements Brain {
 					}
 				}
 				if (shortestDistance < 4) {
-					coolMethods.moveTo(arcLoc.get(nearestArc).directionTo(rc.getLocation()), rc);
+					Statics.moveTo(arcLoc.get(nearestArc).directionTo(rc.getLocation()), rc);
 				} else if (shortestDistance >= 9) {
-					coolMethods.moveTo(rc.getLocation().directionTo(arcLoc.get(nearestArc)), rc);
+					Statics.moveTo(rc.getLocation().directionTo(arcLoc.get(nearestArc)), rc);
 				} else {
 					boolean left = rc
 							.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft().rotateLeft());
@@ -196,7 +196,7 @@ public class SoldierBrain implements Brain {
 			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
 			if (away != null) {
 				if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
-					coolMethods.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
+					Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
 							.directionTo(rc.getLocation()), rc);
 			} else if (enemiesWithinRange.length > 0) {
 				// Check if weapon is ready

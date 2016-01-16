@@ -1,12 +1,12 @@
 package team094;
 
-import java.util.ArrayList;
-import java.util.Random;
+import battlecode.common.Clock;
+import battlecode.common.RobotController;
 
-import battlecode.common.*;
-
-public class ScoutBrain implements Brain {
-
+public class ViperBrain {
+	
+	
+	
 	public void initialize(RobotController rc) {
 
 	}
