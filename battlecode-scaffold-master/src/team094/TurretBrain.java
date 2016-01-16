@@ -40,8 +40,15 @@ public class TurretBrain implements Brain{
 		if (rc.isWeaponReady()) {
             RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
             RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
+            Signal[] signals = rc.emptySignalQueue();
+            for(Signal s: signals) {
+            	//TODO: process signals to get possible attack locations and store in array
+            	RobotInfo[] robots = null; //replace with actual signal stuff
+            }
+            
             if (enemiesWithinRange.length > 0) {
                 for (RobotInfo enemy : enemiesWithinRange) {
+                	
                     // Check whether the enemy is in a valid attack range (turrets have a minimum range)
                     if (rc.canAttackLocation(enemy.location)) {
                         rc.attackLocation(enemy.location);
@@ -57,6 +64,20 @@ public class TurretBrain implements Brain{
                 }
             }
         }
+	}
+	public static boolean travelTo(MapLocation loc) throws GameActionException{
+		if(rc.getType()!=RobotType.TTM) {
+			rc.pack();
+			return false;
+		}
+		else if(rc.getLocation().distanceSquaredTo(loc)<=2) {//TODO: need to make smart 
+			rc.unpack();
+			return true;
+		}
+		else {
+			Statics.navigateTo(loc, rc);
+			return false;
+		}
 	}
 
 }
