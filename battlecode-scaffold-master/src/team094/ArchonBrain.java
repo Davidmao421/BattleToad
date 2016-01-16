@@ -21,7 +21,11 @@ public class ArchonBrain implements Brain {
 	}
 	
 	private boolean canBuild(RobotController rc, RobotType type, Direction dir){
-		return rc.canBuild(dir, type) && rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH;
+		RobotInfo[] robots = rc.senseNearbyRobots(1);
+		Set<MapLocation> locs = new HashSet<>();
+		for (RobotInfo i : robots)
+			locs.add(i.location);
+		return rc.canBuild(dir, type) && rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH && !locs.contains(rc.getLocation().add(dir));
 	}
 
 	private boolean buildRobot(RobotController rc, RobotType type) throws GameActionException {
