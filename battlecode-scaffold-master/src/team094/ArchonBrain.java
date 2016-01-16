@@ -36,10 +36,10 @@ public class ArchonBrain implements Brain {
 			return false;
 		}
 		for (int i = 0; list.size() > 0; i++) {
-			Direction d = list.get((int) (Math.random()*list.size()));
+			Direction d = list.remove((int) (Math.random()*list.size()));
 			if (canBuild(rc,type, d)) {
 				try {
-					rc.build(list.get(i), type);
+					rc.build(d, type);
 					return true;
 				} catch (Exception e) {
 					e.printStackTrace();
