@@ -44,7 +44,7 @@ public class ScoutBrain implements Brain {
 			mLBIndex++;
 			if(mLBIndex == mLB.length){
 				mLBIndex = 0;
-				messageback(rc);
+		//		messageback(rc);
 			}
 		}
 		for(RobotInfo zombie: enemies){
@@ -59,7 +59,7 @@ public class ScoutBrain implements Brain {
 			}
 			if(mLBIndex == mLB.length){
 				mLBIndex = 0;
-				messageback(rc);
+		//		messageback(rc);
 			}
 		}
 		for(RobotInfo neutral: neutrals){
@@ -70,7 +70,7 @@ public class ScoutBrain implements Brain {
 			mLB[mLBIndex] = neutral.location;
 			mLBIndex++;
 			if(mLBIndex == mLB.length){
-				messageback(rc);
+			//	messageback(rc);
 			}
 		}
 		
@@ -87,11 +87,11 @@ public class ScoutBrain implements Brain {
 		}
 		if(myArray.length != 0){
 			
-			move = coolMethods.reflect(coolMethods.averageLocation(myArray),rc);
+			move = Statics.reflect(Statics.averageLocation(myArray),rc);
 		}
 		if(rc.isCoreReady()&& move!=null){
 			try {
-				coolMethods.navigateTo(move,rc);
+				Statics.navigateTo(move,rc);
 			} catch (GameActionException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -99,6 +99,6 @@ public class ScoutBrain implements Brain {
 		}	
 	}
 	private static void messageback(RobotController rc, MapLocation mapLoc, int type) {
-		rc.broadcastMessageSignal(message1, message2, radiusSquared); //TODO: HAve to not suck dick
+		//rc.broadcastMessageSignal(message1, message2, radiusSquared); //TODO: HAve to not suck dick
 	}
 }
