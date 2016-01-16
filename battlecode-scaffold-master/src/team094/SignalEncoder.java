@@ -8,7 +8,6 @@ import battlecode.common.Team;
 
 //public class SignalFactoryEnocderFactoryFactoryJavaFactory{
 public class SignalEncoder {
-
 	public static final int ARCHON = 0, SCOUT = 1, SOLDIER = 2, GUARD = 3, VIPER = 4, TURRET = 5, TTM = 6;
 
 	private static int robotTypeToInt(RobotType type) {
@@ -53,7 +52,20 @@ public class SignalEncoder {
 			return null;
 		}
 	}
-
+	public static Signal encodeParts(MapLocation mapLoc, double numParts){
+		int part1, part2 = part1 = 0;
+		int parts = (int) numParts;
+		part1 = PacketType.PARTS_CACHE.header << 28;
+		part1 |= mapLoc.x << 20;
+		part1 |= mapLoc.y << 12;
+		part2 |= parts << 12;
+		return new Signal (new MapLocation(6,9),0,Team.ZOMBIE, part1, part2);
+	}
+	public static Signal decodeParts(Signal e){
+		MapLocation l = new MapLocation(((0x0ff00000 & e.getMessage()[0])) >> 20, (0x000ff000 & e.getMessage()[0]) >> 12);
+		int numParts = (0xfffff000 & e.getMessage()[1] >> 12);
+		return new Signal(l,numParts, e.getTeam());
+	}
 	public static Signal encodeEcho(Signal s) {
 
 		int part1, part2 = part1 = 0;
@@ -66,34 +78,37 @@ public class SignalEncoder {
 		return new Signal(s.getLocation(), s.getID(), s.getTeam(), part1, part2);
 
 	}
+	public static Signal decodeEcho(Signal e) {
+		MapLocation l = new MapLocation((0x0e000000 & e.getMessage()[0]) >> 21, (0x001fc000 & e.getMessage()[0]) >> 14);
+		int i = ((e.getMessage()[0] & 0x00003fff) << 1) + ((e.getMessage()[1] & 0x80000000) >> 31);
+		return new Signal(l, i, e.getTeam());
+	}
 
 	public static PacketType getPacketType(Signal s) {
 		switch ((s.getMessage()[0] & 0xf0000000) >> 24) {
 		case 0:
 			return PacketType.ECHO;
 		case 1:
-			return PacketType.ATTACK_ENEMY;
+			return PacketType.NEW_ROBOT;
 		case 2:
+			return PacketType.ATTACK_ENEMY;
+		case 3:
 			return PacketType.PANIC;
-		case 3: 
+		case 4: 
 			return PacketType.PANIC_OVER;
-		case 4:
-			return PacketType.DEAD;
 		case 5:
-			return PacketType.CHANGE_SCHEME;
+			return PacketType.DEAD;
 		case 6:
+			return PacketType.CHANGE_SCHEME;
+		case 7:
 			return PacketType.LOCAL_ATTACK;
+		case 8:
+			return PacketType.PARTS_CACHE;
 		default:
 			return PacketType.OTHER;
 		}
 	}
 
-	public static Signal decodeEcho(Signal e) {
-		MapLocation l = new MapLocation((0x0e000000 & e.getMessage()[0]) >> 21, (0x001fc000 & e.getMessage()[0]) >> 28);
-		int i = ((e.getMessage()[0] & 0x00003fff) << 1) + ((e.getMessage()[1] & 0x80000000) >> 31);
-		return new Signal(l, i, e.getTeam());
-	}
-	
 	public static Signal encodeRobot(RobotIdTypePair pair){
 		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
