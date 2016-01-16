@@ -1,17 +1,44 @@
 package team094;
 
+import java.util.ArrayList;
+
 import battlecode.common.Clock;
+import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
 public class ViperBrain {
-	
-	
-	
-	public void initialize(RobotController rc) {
 
+	public MapLocation enemyCom, teamCom;
+
+	public void initialize(RobotController rc) {
+		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
+		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 	}
 
-	public void runTurn(RobotController rc) {
+	public void attack(RobotController rc, RobotInfo enemy) throws GameActionException {
+		int dist = Statics.sqrDist(rc.getLocation(), enemy.location);
+		if (!rc.canAttackLocation(enemy.location))
+			if (rc.canMove(rc.getLocation().directionTo(enemy.location))) {
+				rc.move(rc.getLocation().directionTo(enemy.location));
+				return;
+			}
+		rc.attackLocation(enemy.location);
+	}
+
+	public void runTurn(RobotController rc) throws GameActionException {
+		RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+		RobotInfo closestEnemy = Statics.closestRobot(enemyCom, robots);
+
+		if (Statics.sqrDist(enemyCom, closestEnemy.location) < Statics.sqrDist(closestEnemy.location, teamCom)) {
+			attack(rc, closestEnemy);
+			return;
+		}
+
+		if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
+			rc.move(rc.getLocation().directionTo(enemyCom));
 
 	}
 
@@ -21,12 +48,12 @@ public class ViperBrain {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		while(true){
+
+		while (true) {
 			Clock.yield();
-			try{
+			try {
 				runTurn(rc);
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}

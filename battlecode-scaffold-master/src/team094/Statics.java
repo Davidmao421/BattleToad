@@ -1,5 +1,6 @@
 package team094;
 
+import java.awt.Robot;
 import java.util.List;
 
 import battlecode.common.Direction;
@@ -15,8 +16,33 @@ public class Statics {
 	
 	public static int maxCord = 80;
 
+	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){
+		if (info.length == 0) return null;
+		RobotInfo closest = info[0];
+		int closestDist = Integer.MAX_VALUE;
+		for (int i = 1; i < info.length; i++){
+			int dist = sqrDist(loc, info[i].location);
+			if (dist < closestDist){
+				closestDist = dist;
+				closest = info[i];
+			}
+		}
+		return closest;
+	}
+	
 	public static int sqrDist(MapLocation loc1 , MapLocation loc2){
 		return (loc1.x-loc2.x)*(loc1.x-loc2.x) + (loc1.y-loc2.y)*(loc1.y-loc2.y);
+	}
+	
+	public static MapLocation com(MapLocation[] locs){
+		int x,y=x=0; 
+		for (MapLocation l : locs){
+			x += l.x;
+			y += l.y;
+		}
+		y/=Math.max(1, locs.length);
+		x/=Math.max(1, locs.length);
+		return new MapLocation(x,y);
 	}
 	
 	public static MapLocation closestLoc(MapLocation loc, MapLocation[] list){
