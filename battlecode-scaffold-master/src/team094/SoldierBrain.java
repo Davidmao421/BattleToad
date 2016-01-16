@@ -13,32 +13,22 @@ public class SoldierBrain implements Brain {
 	private static Direction[] directions = { Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST };
 	private static ArrayList<MapLocation> targets = new ArrayList<MapLocation>();
+	private static MapLocation lastArcLoc;
 	RobotController rc;
 
 	@Override
 	public void run(RobotController inRc) {
 		rc = inRc;
-		if (Math.random() < 0.5) { // TODO: implement passing of integer to
-									// determine Soldier type
-			while (true) {
-				try {
-					runTurn(rc);
-					Clock.yield();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		} else {
-			while (true) {
-				try {
-					runTurnGuard(rc);
-					Clock.yield();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		while (true) {
+			try {
+				runTurnGuard(rc);
+				Clock.yield();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
+
 
 	public void intialize(RobotController rc) {
 
@@ -180,6 +170,14 @@ public class SoldierBrain implements Brain {
 						rc.move(dir.rotateRight().rotateRight());
 					}
 				}
+			} else {
+				for(int i=0; i<8; i++) {
+					if(rc.senseRubble(rc.getLocation().add(Statics.directions[i]))>GameConstants.RUBBLE_SLOW_THRESH){
+						rc.clearRubble(Statics.directions[i]);
+						break;
+					}			
+				}
+				runTurn(rc);
 			}
 			/*
 			 * Signal[] signals = rc.emptySignalQueue(); for (Signal hej :
