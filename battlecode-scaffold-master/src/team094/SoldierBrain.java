@@ -150,27 +150,34 @@ public class SoldierBrain implements Brain {
 						nearestArc = i;
 					}
 				}
+				Direction dir = arcLoc.get(nearestArc).directionTo(rc.getLocation());
 				if (shortestDistance < 4) {
-					Statics.moveTo(arcLoc.get(nearestArc).directionTo(rc.getLocation()), rc);
+					Statics.moveTo(dir, rc);
 				} else if (shortestDistance >= 9) {
-					Statics.moveTo(rc.getLocation().directionTo(arcLoc.get(nearestArc)), rc);
+					Statics.moveTo(dir.opposite(), rc);
 				} else {
+					for(int i=0; i<8; i++) {
+						if(rc.senseRubble(rc.getLocation().add(Statics.directions[i]))>GameConstants.RUBBLE_SLOW_THRESH){
+							rc.clearRubble(Statics.directions[i]);
+							return;
+						}			
+					}
 					boolean left = rc
-							.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft().rotateLeft());
+							.canMove(dir.rotateLeft().rotateLeft());
 					boolean right = rc
-							.canMove(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight().rotateRight());
+							.canMove(dir.rotateRight().rotateRight());
 					if (left && right) {
 						if (Math.random() < 0.5) {
-							rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft().rotateLeft());
+							rc.move(dir.rotateLeft().rotateLeft());
 						} else {
-							rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight().rotateRight());
+							rc.move(dir.rotateRight().rotateRight());
 						}
 					}
 					if (left && !right) {
-						rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateLeft().rotateLeft());
+						rc.move(dir.rotateLeft().rotateLeft());
 					}
 					if (right && !left) {
-						rc.move(arcLoc.get(nearestArc).directionTo(rc.getLocation()).rotateRight().rotateRight());
+						rc.move(dir.rotateRight().rotateRight());
 					}
 				}
 			}
