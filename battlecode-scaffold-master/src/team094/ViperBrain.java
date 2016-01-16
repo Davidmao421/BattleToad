@@ -8,6 +8,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.Team;
 
 public class ViperBrain {
 
@@ -37,9 +38,16 @@ public class ViperBrain {
 			return;
 		}
 
+		 robots = rc.senseNearbyRobots(-1, Team.ZOMBIE);
+		 closestEnemy = Statics.closestRobot(enemyCom, robots);
+
+		if (Statics.sqrDist(enemyCom, closestEnemy.location) > Statics.sqrDist(closestEnemy.location, teamCom)) {
+			attack(rc, closestEnemy);
+			return;
+		}
+		
 		if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
 			rc.move(rc.getLocation().directionTo(enemyCom));
-
 	}
 
 	public void run(RobotController rc) {
