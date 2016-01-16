@@ -9,10 +9,12 @@ public class ArchonBrain implements Brain {
 		TURRET_CLUSTER, CHARGE, SCAVENGE, RANDOM, NONE, SCOUT
 	}
 
+
 	private int turns;
 	private Routine last;
 	private Routine current;
-
+	private int facing;
+	private int[] possibleDirections = new int[]{0,1,-1,2,3,-2,-3,4};
 	private static final int BROADCAST_RANGE = 70;
 
 	private void setRoutine(Routine r) {
@@ -48,6 +50,16 @@ public class ArchonBrain implements Brain {
 		}
 		return false;
 	}
+	
+	private void moveTowards(RobotController rc, Direction dir) throws GameActionException {
+		for(int i:possibleDirections) {
+			Direction candidateDirection = Direction.values()[(dir.ordinal()+i+8)%8];
+			if(rc.canMove(candidateDirection)) {
+				rc.move(candidateDirection);
+				break;
+			}
+		}
+	}
 
 	private boolean buildScout(RobotController rc) throws GameActionException {
 		return buildRobot(rc, RobotType.SCOUT);
@@ -55,7 +67,7 @@ public class ArchonBrain implements Brain {
 
 	private void intialize(RobotController rc) throws GameActionException {
 		turns = 0;
-
+		facing=0;
 		buildScout(rc);
 		current = Routine.TURRET_CLUSTER;
 	}
@@ -85,9 +97,26 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenge(RobotController rc) throws GameActionException {
-
 		MapLocation[] potential =  rc.sensePartLocations(BROADCAST_RANGE);
-
+		RobotInfo[] neutrals = rc.senseNearbyRobots(BROADCAST_RANGE, Team.NEUTRAL);
+		
+		if(neutrals.length!=0) {
+			MapLocation[] locs = new MapLocation[neutrals.length];
+			int i = 0;
+			for(RobotInfo r:neutrals) {
+				locs[i] = r.location;
+				if(locs[i].distanceSquaredTo(rc.getLocation())<=2) {
+					if(rc.isCoreReady())
+						rc.activate(locs[i]);
+					return;
+				}
+				i++;
+			}
+			_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
+			if(rc.isCoreReady())
+				moveTowards(rc,_moveDirection);
+			return;
+		}
 		
 		if (potential.length == 0 || turns !=1){
 			setRoutine(Routine.RANDOM);
@@ -96,10 +125,14 @@ public class ArchonBrain implements Brain {
 		}
 		
 		_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), potential));
-		if (rc.canMove(_moveDirection)){
-			rc.move(_moveDirection);
-			return;
-		}
+		
+		if(rc.isCoreReady())
+			moveTowards(rc,_moveDirection);
+		
+		//if (rc.canMove(_moveDirection)){
+		//	rc.move(_moveDirection);
+		//	return;
+		//}
 
 	}
 	
