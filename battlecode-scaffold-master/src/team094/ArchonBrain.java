@@ -27,8 +27,7 @@ public class ArchonBrain implements Brain {
 	private boolean buildRobot(RobotController rc, RobotType type) throws GameActionException {
 		ArrayList<Direction> list = new ArrayList<>(Arrays.asList(Statics.directions));
 		if (!rc.hasBuildRequirements(type)){
-			scavenge(rc);
-			turns--;
+			setRoutine(Routine.NONE);
 			return false;
 		}
 		for (int i = 0; list.size() > 0; i++) {
@@ -139,8 +138,10 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn(RobotController rc) throws GameActionException {
-		if (!rc.isCoreReady())
+		if (!rc.isCoreReady()){
+			turns--;
 			return;
+		}
 		switch (current) {
 		case CHARGE:
 			break;
