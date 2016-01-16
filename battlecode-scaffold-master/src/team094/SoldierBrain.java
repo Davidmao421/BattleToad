@@ -106,7 +106,13 @@ public class SoldierBrain implements Brain {
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
-			if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
+			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+			if (away != null) {
+				if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
+					Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
+							.directionTo(rc.getLocation()), rc);
+			} 
+			else if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
 													// MACHINES (PROBABLY WANT
 													// ZOMBIES BECAUSE THEY
 													// DOUBLE DAMAGE)
