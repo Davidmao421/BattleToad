@@ -32,7 +32,8 @@ public class ArchonBrain implements Brain {
 			return false;
 		}
 		for (int i = 0; list.size() > 0; i++) {
-			if (canBuild(rc,type, list.get((int) (Math.random()*list.size())))) {
+			Direction d = list.remove((int) (Math.random()*list.size()));
+			if (canBuild(rc,type, d)) {
 				try {
 					rc.build(list.get(i), type);
 					return true;
@@ -102,7 +103,7 @@ public class ArchonBrain implements Brain {
 	private void randomlyMove(RobotController rc) throws GameActionException{
 		if (turns > 5){
 			_moveDirection = null;
-			turns = 0;
+//			turns = 0;
 			setRoutine(Routine.NONE);
 			return;
 		}
@@ -191,6 +192,7 @@ public class ArchonBrain implements Brain {
 		
 		}
 		rc.setIndicatorString(1, s);
+		rc.setIndicatorString(2, ""+turns);
 //		System.out.println(s);
 	}
 

@@ -40,7 +40,7 @@ public class SoldierBrain implements Brain {
 	}
 
 	public void intialize(RobotController rc) {
-		
+		rc.disintegrate();
 	}
 	public static void runTurnPack(RobotController rc) throws GameActionException {
 		int myAttackRange = rc.getType().attackRadiusSquared;
