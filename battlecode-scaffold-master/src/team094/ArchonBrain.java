@@ -36,7 +36,8 @@ public class ArchonBrain implements Brain {
 			return false;
 		}
 		for (int i = 0; list.size() > 0; i++) {
-			if (canBuild(rc,type, list.get((int) (Math.random()*list.size())))) {
+			Direction d = list.get((int) (Math.random()*list.size()));
+			if (canBuild(rc,type, d)) {
 				try {
 					rc.build(list.get(i), type);
 					return true;
