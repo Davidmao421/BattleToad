@@ -93,7 +93,7 @@ public class Statics {
 					if (rc.canMove(direction) && rc.isCoreReady()) {
 						rc.move(direction);
 					}
-					if (rc.getID() % 2 == 0) {
+					if (Math.random() < 0.5) {
 						direction = direction.rotateLeft();
 					} else {
 						direction = direction.rotateRight();
