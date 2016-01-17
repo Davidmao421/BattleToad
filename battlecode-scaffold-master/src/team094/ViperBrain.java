@@ -10,7 +10,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 
-public class ViperBrain {
+public class ViperBrain implements Brain{
 
 	public MapLocation enemyCom, teamCom;
 

@@ -12,12 +12,15 @@ import battlecode.common.*;
 public class ScoutBrain implements Brain {
 	MapLocation enemyCom, teamCom;
 
-	Queue<Signal> broadcastQueue;
+	// Queue<Signal> broadcastQueue;
+	LinkedList<Signal> broadcastQueue;
+	int index;
 
 	public void initialize(RobotController rc) {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
+		index = 0;
 	}
 
 	public void radiate(RobotController rc) throws GameActionException {
@@ -31,17 +34,23 @@ public class ScoutBrain implements Brain {
 		MapLocation[] parts = rc.sensePartLocations(-1);
 
 		for (MapLocation part : parts) {
-			broadcastQueue.offer(SignalEncoder.encodeParts(part, rc.senseParts(part)));
+			if (!broadcastQueue.contains(SignalEncoder.encodeParts(part, rc.senseParts(part)))) {
+				broadcastQueue.offer(SignalEncoder.encodeParts(part, rc.senseParts(part)));
+			}
 		}
 
 		for (RobotInfo info : robots) {
 			if (info.team == rc.getTeam())
 				continue;
 			if (rc.getTeam().opponent() == info.team
-					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON))
+					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
+				if (!broadcastQueue.contains(SignalEncoder.encodeRobot(info.type, info.ID, info.location)))
 				broadcastQueue.offer(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
-			if (info.team.equals(Team.NEUTRAL))
+			}
+			if (info.team.equals(Team.NEUTRAL)) {
+				if (!broadcastQueue.contains(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location)))
 				broadcastQueue.offer(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
+			}
 		}
 
 	}
@@ -53,9 +62,10 @@ public class ScoutBrain implements Brain {
 	}
 
 	public void broadcast(RobotController rc) throws GameActionException {
-		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
-			Signal s = broadcastQueue.remove();
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 400);
+		if (rc.isCoreReady() && index < broadcastQueue.size()) {
+			Signal s = broadcastQueue.get(index);
+			index++;
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 2 * rc.getType().sensorRadiusSquared);
 		}
 	}
 

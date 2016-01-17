@@ -28,6 +28,15 @@ public class RobotPlayer {
 		case SCOUT:
 			brain = new ScoutBrain();
 			break;
+		
+		case VIPER:
+			brain = new ViperBrain();
+			break;
+			
+		case TURRET:
+			brain = new TurretBrain();
+			break;
+			
 			
 		default:
 			break;
