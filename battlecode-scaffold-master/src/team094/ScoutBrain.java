@@ -15,27 +15,27 @@ public class ScoutBrain implements Brain {
 	// Queue<Signal> broadcastQueue;
 	LinkedList<Signal> broadcastQueue;
 	int index;
-
-	public void initialize(RobotController rc) {
+	RobotController rc;
+	public void initialize() {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
 		index = 0;
 	}
 
-	public void radiate(RobotController rc) throws GameActionException {
+	public void radiate() throws GameActionException {
 		Direction d = teamCom.directionTo(rc.getLocation());
 		if (rc.canMove(d))
 			rc.move(d);
 	}
 
-	public void senseBroadcast(RobotController rc) {
+	public void senseBroadcast() {
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		MapLocation[] parts = rc.sensePartLocations(-1);
 
 		for (MapLocation part : parts) {
 			if (!broadcastQueue.contains(SignalEncoder.encodeParts(part, rc.senseParts(part)))) {
-				broadcastQueue.offer(SignalEncoder.encodeParts(part, rc.senseParts(part)));
+				broadcastQueue.add(SignalEncoder.encodeParts(part, rc.senseParts(part)));
 			}
 		}
 
@@ -45,23 +45,23 @@ public class ScoutBrain implements Brain {
 			if (rc.getTeam().opponent() == info.team
 					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
 				if (!broadcastQueue.contains(SignalEncoder.encodeRobot(info.type, info.ID, info.location)))
-				broadcastQueue.offer(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
+				broadcastQueue.add(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
 			}
 			if (info.team.equals(Team.NEUTRAL)) {
 				if (!broadcastQueue.contains(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location)))
-				broadcastQueue.offer(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
+				broadcastQueue.add(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
 			}
 		}
 
 	}
 
-	public void runTurn(RobotController rc) throws GameActionException {
-		senseBroadcast(rc);
-		// radiate(rc);
-		broadcast(rc);
+	public void runTurn() throws GameActionException {
+		senseBroadcast();
+		// radiate(); // TODO: working movement
+		broadcast();
 	}
 
-	public void broadcast(RobotController rc) throws GameActionException {
+	public void broadcast() throws GameActionException {
 		if (rc.isCoreReady() && index < broadcastQueue.size()) {
 			Signal s = broadcastQueue.get(index);
 			index++;
@@ -69,9 +69,10 @@ public class ScoutBrain implements Brain {
 		}
 	}
 
-	public void run(RobotController rc) {
+	public void run(RobotController rc1) {
+		rc = rc1;
 		try {
-			initialize(rc);
+			initialize();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -79,14 +80,14 @@ public class ScoutBrain implements Brain {
 		while (true) {
 			Clock.yield();
 			try {
-				runTurn(rc);
+				runTurn();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 	/*
-	 * public void run(RobotController rc){ while (true)Clock.yield(); // what
+	 * public void run(){ while (true)Clock.yield(); // what
 	 * the hell is this }
 	 */
 }
