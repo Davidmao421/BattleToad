@@ -48,13 +48,15 @@ public class ScoutBrain implements Brain {
 
 	public void runTurn(RobotController rc) throws GameActionException {
 		senseBroadcast(rc);
-		//radiate(rc);
+		// radiate(rc);
 		broadcast(rc);
 	}
 
 	public void broadcast(RobotController rc) throws GameActionException {
-		Signal s = broadcastQueue.remove();
-		rc.broadcastMessageSignal(s.getMessage()[1], s.getMessage()[2], 400);
+		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
+			Signal s = broadcastQueue.remove();
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 400);
+		}
 	}
 
 	public void run(RobotController rc) {
