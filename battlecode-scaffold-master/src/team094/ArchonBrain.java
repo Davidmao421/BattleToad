@@ -15,13 +15,13 @@ public class ArchonBrain implements Brain {
 	private Routine current;
 	private int[] possibleDirections = new int[]{0,1,-1,2,3,-2,-3,4};
 	private static final int BROADCAST_RANGE = 70;
-
+	private RobotController rc;
 	private void setRoutine(Routine r) {
 		last = current;
 		current = r;
 	}
 	
-	private boolean canBuild(RobotController rc, RobotType type, Direction dir){
+	private boolean canBuild(RobotType type, Direction dir){
 		RobotInfo[] robots = rc.senseNearbyRobots(1);
 		Set<MapLocation> locs = new HashSet<>();
 		for (RobotInfo i : robots)
@@ -29,16 +29,16 @@ public class ArchonBrain implements Brain {
 		return rc.canBuild(dir, type) && rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH && !locs.contains(rc.getLocation().add(dir));
 	}
 
-	private boolean buildRobot(RobotController rc, RobotType type) throws GameActionException {
+	private boolean buildRobot(RobotType type) throws GameActionException {
 		ArrayList<Direction> list = new ArrayList<>(Arrays.asList(Statics.directions));
 		if (!rc.hasBuildRequirements(type)){
-			scavenge(rc);
+			scavenge();
 			turns--;
 			return false;
 		}
 		while (list.size() > 0) {
 			Direction d = list.remove((int) (Math.random()*list.size()));
-			if (canBuild(rc,type, d)) {
+			if (canBuild(type, d)) {
 				try {
 					rc.build(d, type);
 					return true;
@@ -50,7 +50,7 @@ public class ArchonBrain implements Brain {
 		return false;
 	}
 	
-	private void moveTowards(RobotController rc, Direction dir) throws GameActionException {
+	private void moveTowards(Direction dir) throws GameActionException {
 		for(int i:possibleDirections) {
 			Direction candidateDirection = Direction.values()[(dir.ordinal()+i+8)%8];
 			if(rc.canMove(candidateDirection)) {
@@ -60,25 +60,25 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
-	private boolean buildScout(RobotController rc) throws GameActionException {
-		return buildRobot(rc, RobotType.SCOUT);
+	private boolean buildScout() throws GameActionException {
+		return buildRobot(RobotType.SCOUT);
 	}
 
-	private void intialize(RobotController rc) throws GameActionException {
+	private void intialize() throws GameActionException {
 		turns = 0;
-//		buildScout(rc);
+//		buildScout();
 		current = Routine.TURRET_CLUSTER;
 	}
 
-	private void buildTurretCluster(RobotController rc) throws GameActionException {
+	private void buildTurretCluster() throws GameActionException {
 		switch (turns) {
 		case 1:
 		case 2:
 		case 3:
-			buildRobot(rc, RobotType.SOLDIER);
+			buildRobot(RobotType.SOLDIER);
 			break;
 		case 4:
-			buildRobot(rc, RobotType.TURRET);
+			buildRobot(RobotType.TURRET);
 			RobotInfo[] robots = rc.senseNearbyRobots();
 			for (RobotInfo r : robots)
 				if (r.team == rc.getTeam() && r.type == RobotType.TURRET
@@ -94,7 +94,7 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
-	private void scavenge(RobotController rc) throws GameActionException {
+	private void scavenge() throws GameActionException {
 		MapLocation[] potential =  rc.sensePartLocations(BROADCAST_RANGE);
 		RobotInfo[] neutrals = rc.senseNearbyRobots(BROADCAST_RANGE, Team.NEUTRAL);
 		
@@ -112,20 +112,20 @@ public class ArchonBrain implements Brain {
 			}
 			_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
 			if(rc.isCoreReady())
-				moveTowards(rc,_moveDirection);
+				moveTowards(_moveDirection);
 			return;
 		}
 		
 		if (potential.length == 0 || turns !=1){
 			setRoutine(Routine.RANDOM);
-			randomlyMove(rc);
+			randomlyMove();
 			return;
 		}
 		
 		_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), potential));
 		
 		if(rc.isCoreReady())
-			moveTowards(rc,_moveDirection);
+			moveTowards(_moveDirection);
 		
 		//if (rc.canMove(_moveDirection)){
 		//	rc.move(_moveDirection);
@@ -135,7 +135,7 @@ public class ArchonBrain implements Brain {
 	}
 	
 	Direction _moveDirection;
-	private void randomlyMove(RobotController rc) throws GameActionException{
+	private void randomlyMove() throws GameActionException{
 		if (turns > 5){
 			rc.broadcastSignal(BROADCAST_RANGE);
 			_moveDirection = null;
@@ -192,18 +192,32 @@ public class ArchonBrain implements Brain {
 		}
 	}
 	
-	private void determineRoutine(RobotController rc){
+	private void determineRoutine(){
 		if (last != Routine.TURRET_CLUSTER)
 			setRoutine(Routine.TURRET_CLUSTER);
 		else 
 			setRoutine(Routine.SCAVENGE);
 	}
 	
-	private void charge(RobotController rc){
+	private void charge(){
 		//TODO: Implement charge
 	}
-
-	private void runTurn(RobotController rc) throws GameActionException {
+	
+	private void navigateToAttack(MapLocation attackLoc) throws GameActionException{ //TODO: should be used in tandem with scouts to tell where to go etc
+		if(rc.getLocation().distanceSquaredTo(attackLoc)<=100) { //might want to change value
+			//TODO: need to send signals to tell soldiers to rush attackLoc
+			Direction toAttack = rc.getLocation().directionTo(attackLoc);
+			if(rc.isCoreReady()&&canBuild(RobotType.SOLDIER, toAttack)) {
+				rc.build(toAttack, RobotType.SOLDIER);
+			}
+		}
+		else {
+			Statics.navigateTo(attackLoc, rc);
+		}
+			
+	}
+	
+	private void runTurn() throws GameActionException {
 		if (!rc.isCoreReady()) {
 			turns--;
 			return;
@@ -212,20 +226,20 @@ public class ArchonBrain implements Brain {
 		case CHARGE:
 			break;
 		case NONE:
-			determineRoutine(rc);
-			runTurn(rc);
+			determineRoutine();
+			runTurn();
 			return;
 		case RANDOM:
-			randomlyMove(rc);
+			randomlyMove();
 			break;
 		case SCAVENGE:
-			scavenge(rc);
+			scavenge();
 			break;
 		case SCOUT:
-			buildScout(rc);
+			buildScout();
 			break;
 		case TURRET_CLUSTER:
-			buildTurretCluster(rc);
+			buildTurretCluster();
 			break;
 		default:
 			break;
@@ -263,9 +277,10 @@ public class ArchonBrain implements Brain {
 	}
 
 	@Override
-	public void run(RobotController rc) {
+	public void run(RobotController rcI) {
+		rc=rcI;
 		try {
-			intialize(rc);
+			intialize();
 		} catch (GameActionException e1) {
 			e1.printStackTrace();
 		}
@@ -274,7 +289,7 @@ public class ArchonBrain implements Brain {
 			Clock.yield();
 			turns++;
 			try {
-				runTurn(rc);
+				runTurn();
 			} catch (GameActionException e) {
 				e.printStackTrace();
 			}
