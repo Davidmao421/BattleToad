@@ -1,6 +1,7 @@
 package team094;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import battlecode.common.*;
@@ -15,6 +16,7 @@ public class SoldierBrain implements Brain {
 	private static ArrayList<MapLocation> targets = new ArrayList<MapLocation>();
 	private static MapLocation lastArcLoc;
 	RobotController rc;
+	
 
 	@Override
 	public void run(RobotController inRc) {
@@ -100,7 +102,7 @@ public class SoldierBrain implements Brain {
 			if (away != null) {
 				if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
 					Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
-							.directionTo(rc.getLocation()), rc);
+							.directionTo(rc.getLocation()), rc); //TODO: possibly lead stronger zombies towards enemy
 			} 
 			else if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
 													// MACHINES (PROBABLY WANT
@@ -120,13 +122,17 @@ public class SoldierBrain implements Brain {
 			}
 		}
 		if (!shouldAttack && rc.isCoreReady()) {
-
+			for(Signal s:rc.emptySignalQueue()) {
+				if (s.getTeam().equals(rc.getTeam())) {
+					lastArcLoc = s.getLocation();
+				}
+			}
 			RobotInfo[] nearby = rc.senseNearbyRobots();
 			int numArchons = 0;
 			ArrayList<MapLocation> arcLoc = new ArrayList<MapLocation>();
-			for (RobotInfo naw : nearby) {
-				if (naw.type.equals(RobotType.ARCHON)) {
-					arcLoc.add(naw.location);
+			for (RobotInfo r : nearby) {
+				if (r.type.equals(RobotType.ARCHON)) {
+					arcLoc.add(r.location);
 					numArchons++;
 				}
 			}
@@ -140,6 +146,7 @@ public class SoldierBrain implements Brain {
 						nearestArc = i;
 					}
 				}
+				lastArcLoc = arcLoc.get(nearestArc);
 				Direction dir = arcLoc.get(nearestArc).directionTo(rc.getLocation());
 				if (shortestDistance < 4) {
 					Statics.moveTo(dir, rc);
@@ -157,7 +164,7 @@ public class SoldierBrain implements Brain {
 					boolean right = rc
 							.canMove(dir.rotateRight().rotateRight());
 					if (left && right) {
-						if (Math.random() < 0.5) {
+						if (Math.random() < 0.5d) {
 							rc.move(dir.rotateLeft().rotateLeft());
 						} else {
 							rc.move(dir.rotateRight().rotateRight());
@@ -170,14 +177,16 @@ public class SoldierBrain implements Brain {
 						rc.move(dir.rotateRight().rotateRight());
 					}
 				}
-			} else {
-				for(int i=0; i<8; i++) {
-					if(rc.senseRubble(rc.getLocation().add(Statics.directions[i]))>GameConstants.RUBBLE_SLOW_THRESH){
-						rc.clearRubble(Statics.directions[i]);
-						break;
-					}			
-				}
-				runTurn(rc);
+			} else { //No Archons nearby
+				if(lastArcLoc != null) {
+					Direction dir = rc.getLocation().directionTo(lastArcLoc);
+					Statics.moveTo(dir, rc);
+					if(rc.getLocation().equals(lastArcLoc)) {
+						lastArcLoc = null;
+					}
+				} else {
+					//rc.senseNearbyRobots(rc.getType().sensorRadiusSquared);
+				}	
 			}
 			/*
 			 * Signal[] signals = rc.emptySignalQueue(); for (Signal hej :

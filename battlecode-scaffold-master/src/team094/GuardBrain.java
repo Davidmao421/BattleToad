@@ -37,6 +37,10 @@ public class GuardBrain implements Brain {
 		boolean shouldAttack = false;
 		// If this robot type can attack, check for enemies within range and
 		// attack one
+		if(!rc.isCoreReady())
+		{
+			return;
+		}
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, enemyTeam);
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);

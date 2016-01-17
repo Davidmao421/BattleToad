@@ -13,7 +13,6 @@ public class ArchonBrain implements Brain {
 	private int turns;
 	private Routine last;
 	private Routine current;
-	private int facing;
 	private int[] possibleDirections = new int[]{0,1,-1,2,3,-2,-3,4};
 	private static final int BROADCAST_RANGE = 70;
 
@@ -67,7 +66,6 @@ public class ArchonBrain implements Brain {
 
 	private void intialize(RobotController rc) throws GameActionException {
 		turns = 0;
-		facing=0;
 //		buildScout(rc);
 		current = Routine.TURRET_CLUSTER;
 	}
@@ -139,10 +137,40 @@ public class ArchonBrain implements Brain {
 	Direction _moveDirection;
 	private void randomlyMove(RobotController rc) throws GameActionException{
 		if (turns > 5){
+			rc.broadcastSignal(BROADCAST_RANGE);
 			_moveDirection = null;
 			turns = 0;
 			setRoutine(Routine.NONE);
 			return;
+		}
+		RobotInfo[] nearby = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared);
+		int allies = 0;
+		int enemies = 0;
+		for(RobotInfo r:nearby) {
+			if(r.team.equals(rc.getTeam())) {
+				allies++;
+			} else {
+				enemies++;
+			}
+		}
+		
+		if(enemies>allies) {//run away
+			MapLocation away = rc.getLocation().add(Statics.directions[0]);
+			for(RobotInfo r:nearby) {
+				if(!r.team.equals(rc.getTeam())) {
+					away = r.location;
+					break;
+				}
+			}
+			_moveDirection = away.directionTo(rc.getLocation());
+			int[] dirs = new int[]{0,1,-1,2,-2};
+			for(int i:dirs) {
+				Direction candidateDirection = Statics.directions[_moveDirection.ordinal()+i+8%8];
+				if(rc.canMove(candidateDirection)) {
+					rc.move(candidateDirection);
+					return;
+				}
+			}
 		}
 		
 		if (_moveDirection == null)
@@ -176,8 +204,10 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn(RobotController rc) throws GameActionException {
-		if (!rc.isCoreReady())
+		if (!rc.isCoreReady()) {
+			turns--;
 			return;
+		}
 		switch (current) {
 		case CHARGE:
 			break;

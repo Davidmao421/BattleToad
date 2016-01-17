@@ -5,6 +5,10 @@ import java.util.Random;
 import battlecode.common.*;
 
 public class TurretBrain implements Brain{
+	Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
+            Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+    RobotType[] robotTypes = {RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
+            RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET};
 	static RobotController rc;
 	@Override
 	public void run(RobotController rcI) {
@@ -30,10 +34,6 @@ public class TurretBrain implements Brain{
         }
 	}
 	public static void runTurn() throws GameActionException {
-		Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
-                Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-        RobotType[] robotTypes = {RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
-                RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET};
         int myAttackRange = 0;
         Team myTeam = rc.getTeam();
         Team enemyTeam = myTeam.opponent();
