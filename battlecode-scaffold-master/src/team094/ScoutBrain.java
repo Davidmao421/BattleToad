@@ -11,7 +11,7 @@ import battlecode.common.*;
 
 public class ScoutBrain implements Brain {
 	MapLocation enemyCom, teamCom;
-	
+
 	Queue<Signal> broadcastQueue;
 
 	public void initialize(RobotController rc) {
@@ -20,31 +20,41 @@ public class ScoutBrain implements Brain {
 		broadcastQueue = new LinkedList<>();
 	}
 
-	public void radiate(RobotController rc) throws GameActionException{
+	public void radiate(RobotController rc) throws GameActionException {
 		Direction d = teamCom.directionTo(rc.getLocation());
 		if (rc.canMove(d))
 			rc.move(d);
 	}
-	
-	public void senseBroadcast(RobotController rc){
+
+	public void senseBroadcast(RobotController rc) {
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		MapLocation[] parts = rc.sensePartLocations(-1);
-		
-		for (MapLocation part : parts){
-			broadcastQueue.offer(SignalEncoder.encodeParts(part,rc.senseParts(part)));
+
+		for (MapLocation part : parts) {
+			broadcastQueue.offer(SignalEncoder.encodeParts(part, rc.senseParts(part)));
 		}
-		
-		for (RobotInfo info : robots){
+
+		for (RobotInfo info : robots) {
 			if (info.team == rc.getTeam())
 				continue;
-			if (rc.getTeam().opponent() == info.team && (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON))
-				broadcastQueue.offer(SignalEncoder.encodeRobot(info.type,info.ID,info.location));
+			if (rc.getTeam().opponent() == info.team
+					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON))
+				broadcastQueue.offer(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
+			if (info.team.equals(Team.NEUTRAL))
+				broadcastQueue.offer(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
 		}
+
 	}
-	
+
 	public void runTurn(RobotController rc) throws GameActionException {
-		sense(rc);
-		radiate(rc);
+		senseBroadcast(rc);
+		//radiate(rc);
+		broadcast(rc);
+	}
+
+	public void broadcast(RobotController rc) throws GameActionException {
+		Signal s = broadcastQueue.remove();
+		rc.broadcastMessageSignal(s.getMessage()[1], s.getMessage()[2], 400);
 	}
 
 	public void run(RobotController rc) {
@@ -53,17 +63,18 @@ public class ScoutBrain implements Brain {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		while(true){
+
+		while (true) {
 			Clock.yield();
-			try{
+			try {
 				runTurn(rc);
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
-/*	public void run(RobotController rc){
-		while (true)Clock.yield(); // what the hell is this
-	}*/
+	/*
+	 * public void run(RobotController rc){ while (true)Clock.yield(); // what
+	 * the hell is this }
+	 */
 }
