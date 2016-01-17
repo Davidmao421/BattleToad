@@ -83,7 +83,7 @@ public class ArchonBrain implements Brain {
 			for (RobotInfo r : robots)
 				if (r.team == rc.getTeam() && r.type == RobotType.TURRET
 						&& r.location.distanceSquaredTo(rc.getLocation()) == 1) {
-					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location);
+					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location, rc.getLocation());
 					rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], BROADCAST_RANGE);
 				}
 			break;
