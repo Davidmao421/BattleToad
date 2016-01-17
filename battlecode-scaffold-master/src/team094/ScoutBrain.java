@@ -10,7 +10,7 @@ import com.sun.org.apache.bcel.internal.generic.BREAKPOINT;
 import battlecode.common.*;
 
 public class ScoutBrain implements Brain {
-	
+	/*
 	MapLocation enemyCom, teamCom;
 	
 	Queue<Signal> broadcastQueue;
@@ -63,5 +63,8 @@ public class ScoutBrain implements Brain {
 				e.printStackTrace();
 			}
 		}
+	}*/
+	public void run(RobotController rc){
+		while (true)Clock.yield();
 	}
 }

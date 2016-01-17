@@ -28,16 +28,16 @@ public class ViperBrain {
 			}
 		rc.attackLocation(enemy.location);
 	}
-	
+	/*
 	public void pussy(RobotController rc, RobotInfo[] enemies){
-		RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+		RobotInfo away = CompareStuff.moveAwayFrom(enemies, rc.getLocation());
 		if (away != null) {
 			if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
-				Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
+				Statics.moveTo(CompareStuff.moveAwayFrom(enemies, rc.getLocation()).location
 						.directionTo(rc.getLocation()), rc);
 		} 
 	}
-
+*/
 	public void runTurn(RobotController rc) throws GameActionException {
 		RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
 		RobotInfo closestEnemy = Statics.closestRobot(enemyCom, robots);

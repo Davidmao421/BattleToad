@@ -68,7 +68,7 @@ public class ArchonBrain implements Brain {
 	private void intialize(RobotController rc) throws GameActionException {
 		turns = 0;
 		facing=0;
-		buildScout(rc);
+//		buildScout(rc);
 		current = Routine.TURRET_CLUSTER;
 	}
 
