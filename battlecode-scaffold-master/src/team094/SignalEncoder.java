@@ -104,9 +104,25 @@ public class SignalEncoder {
 			return PacketType.LOCAL_ATTACK;
 		case 8:
 			return PacketType.PARTS_CACHE;
+		case 9:
+			return PacketType.NEUTRAL_ROBOT;
 		default:
 			return PacketType.OTHER;
 		}
+	}
+	
+	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc){
+		int part1, part2 = part1 = 0;
+		part1 = PacketType.NEW_ROBOT.header << 28;
+		part1 |= loc.x << 20;
+		part1 |= loc.y << 12;
+		part1 |= robotTypeToInt(type) << 8;
+		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL,part1, part2);
+	}
+	public static Signal decodeNeutralRobot(Signal s){
+		MapLocation l = new MapLocation(((0x0ff00000 & s.getMessage()[0])) >> 20, (0x000ff000 & s.getMessage()[0]) >> 12);
+		int robotType = (0x000000f0 & s.getMessage()[0] >> 8);
+		return new Signal (l, robotType, s.getTeam());
 	}
 
 	public static Signal encodeRobot(RobotIdTypePair pair){

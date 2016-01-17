@@ -10,6 +10,7 @@ public enum PacketType {
 	   CHANGE_SCHEME(6),
 	   LOCAL_ATTACK(7),
 	   PARTS_CACHE(8),
+	   NEUTRAL_ROBOT(9),
 	    OTHER(31);
 
 	    public final int header;
