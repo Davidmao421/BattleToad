@@ -4,6 +4,8 @@ import battlecode.common.*;
 
 public class TurretBrain implements Brain {
 
+	private int radius;
+
 	public void initialize(RobotController rc) {
 
 	}
@@ -11,7 +13,7 @@ public class TurretBrain implements Brain {
 	public void attack(RobotController rc, MapLocation hostile) throws GameActionException {
 		if (rc.getType() == RobotType.TTM)
 			rc.unpack();
-		
+
 		if (hostile == null)
 			return;
 		if (rc.canAttackLocation(hostile) && rc.isCoreReady())
@@ -35,11 +37,11 @@ public class TurretBrain implements Brain {
 	}
 
 	public void move(RobotController rc, Direction d) throws GameActionException {
-		if (rc.getType() == RobotType.TURRET){
+		if (rc.getType() == RobotType.TURRET) {
 			rc.pack();
 			return;
 		}
-		
+
 		if (rc.canMove(d) && rc.isCoreReady())
 			rc.move(d);
 	}
@@ -67,42 +69,15 @@ public class TurretBrain implements Brain {
 		int priority = 0;
 
 		for (Signal s : signals) {
-			switch (SignalEncoder.getPacketType(s)) {
-			case ATTACK_ENEMY:
+			switch (s.getMessage()[0]) {
+			case 0:
 				break;
-			case CHANGE_SCHEME:
-				break;
-			case DEAD:
-				break;
-			case ECHO:
-				break;
-			case LOCAL_ATTACK:
-				break;
-			case NEUTRAL_ROBOT:
-				break;
-			case NEW_ROBOT:
-				break;
-			case OTHER:
-				break;
-			case PANIC:
-				break;
-			case PANIC_OVER:
-				break;
-			case PARTS_CACHE:
-				break;
-			default:
+			case 1:
 				break;
 			}
-		}
 
-		if (priority < 2) {
-			if (attackNearby(rc)) {
-			} else
-				attackSpecific(rc, target);
-		} else {
-			attackSpecific(rc, target);
 		}
-
+		attackNearby(rc);
 	}
 
 	public void run(RobotController rc) {
@@ -120,6 +95,7 @@ public class TurretBrain implements Brain {
 				runTurn(rc);
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.out.println(e.getMessage());
 			}
 		}
 	}

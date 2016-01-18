@@ -6,7 +6,7 @@ import battlecode.common.*;
 public class ArchonBrain implements Brain {
 
 	private enum Routine {
-		TURRET_CLUSTER, GROUP, NONE;
+		CLUSTER, GROUP, NONE;
 	}
 
 	private int turns;
@@ -17,13 +17,14 @@ public class ArchonBrain implements Brain {
 	private MapLocation lastLoc;
 	private MapLocation[] archonLocs;
 	private List<MapLocation> knownParts;
-//	private List<MapLocation> knownEnemyArchons;
+	// private List<MapLocation> knownEnemyArchons;
 	private List<MapLocation> knownNeutralRobots;
 
 	private Map<Integer, RobotInfo> robots;
 
 	int panicRobot = -1;
 	int head;
+
 	private void setRoutine(Routine r) {
 		last = current;
 		current = r;
@@ -55,30 +56,24 @@ public class ArchonBrain implements Brain {
 		return false;
 	}
 
-	private void moveTowards(Direction dir) throws GameActionException {
-		Statics.moveTo(dir, rc);
-	}
-
 	private void initialize() throws GameActionException {
 		turns = 0;
 		lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
-		current = Routine.TURRET_CLUSTER;
+		current = Routine.GROUP;
 
 		knownNeutralRobots = new LinkedList<MapLocation>();
 		knownParts = new LinkedList<MapLocation>();
 		robots = new TreeMap<Integer, RobotInfo>();
-		Signal[] incoming = rc.emptySignalQueue();
-		rc.setIndicatorString(0, ""+incoming.length+" messages");
-		
-		rc.broadcastSignal();
 	}
 
 	private void buildTurretCluster() throws GameActionException {
-		if(rc.hasBuildRequirements(RobotType.TURRET)) {
-			buildRobot(RobotType.TURRET);
+		if (rc.getID() == head) {
+			if (rc.hasBuildRequirements(RobotType.TURRET)) {
+				buildRobot(RobotType.TURRET);
+			}
 		}
 	}
-	
+
 	private void group() throws GameActionException {
 		Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
 	}
@@ -86,16 +81,18 @@ public class ArchonBrain implements Brain {
 	Direction _moveDirection;
 
 	private void determineRoutine() {
-		if()
-		setRoutine()
+		setRoutine(Routine.GROUP);
 	}
-	
-
 
 	private void runTurn() throws GameActionException {
 		if (!rc.isCoreReady()) {
 			turns--;
 			return;
+		}
+		if (rc.getRoundNum() == 0) {
+			Signal[] incoming = rc.emptySignalQueue();
+			rc.setIndicatorString(1, "" + incoming.length + " messages");
+			rc.broadcastSignal(BROADCAST_RANGE * 2);
 		}
 		switch (current) {
 		case NONE:
@@ -105,7 +102,7 @@ public class ArchonBrain implements Brain {
 		case GROUP:
 			group();
 			break;
-		case TURRET_CLUSTER:
+		case CLUSTER:
 			buildTurretCluster();
 			break;
 		default:
@@ -115,23 +112,14 @@ public class ArchonBrain implements Brain {
 		// DEBUG
 		String s = "";
 		switch (current) {
-		case CHARGE:
-			s = "charge";
-			break;
 		case NONE:
 			s = "none";
 			break;
-		case RANDOM:
-			s = "random";
-			break;
-		case SCAVENGE:
-			s = "scavenge";
-			break;
-		case SCOUT:
-			s = "scout";
-			break;
-		case TURRET_CLUSTER:
+		case CLUSTER:
 			s = "turret cluster";
+			break;
+		case GROUP:
+			s = "group";
 			break;
 		default:
 			s = "fuck";
