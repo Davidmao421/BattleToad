@@ -50,10 +50,10 @@ public class ScoutBrain implements Brain {
 				continue;
 			if (rc.getTeam().opponent() == info.team
 					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
-				addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location, rc.getLocation()));
+				//addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location, rc.getLocation()));
 			}
 			if (info.team.equals(Team.NEUTRAL)) {
-				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location, rc.getLocation()));
+				//addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location, rc.getLocation()));
 			}
 		}
 
