@@ -9,35 +9,38 @@ public class ArchonBrain implements Brain {
 		TURRET_CLUSTER, CHARGE, SCAVENGE, RANDOM, NONE, SCOUT
 	}
 
-
 	private int turns;
 	private Routine last;
 	private Routine current;
-	private int[] possibleDirections = new int[]{0,1,-1,2,3,-2,-3,4};
+	private int[] possibleDirections = new int[] { 0, 1, -1, 2, 3, -2, -3, 4 };
 	private static final int BROADCAST_RANGE = 70;
 	private RobotController rc;
+	private MapLocation lastLoc;
+
 	private void setRoutine(Routine r) {
 		last = current;
 		current = r;
 	}
-	
-	private boolean canBuild(RobotType type, Direction dir){
+
+	private boolean canBuild(RobotType type, Direction dir) {
 		RobotInfo[] robots = rc.senseNearbyRobots(1);
 		Set<MapLocation> locs = new HashSet<>();
 		for (RobotInfo i : robots)
 			locs.add(i.location);
-		return rc.canBuild(dir, type) && rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH && !locs.contains(rc.getLocation().add(dir));
+		return rc.canBuild(dir, type)
+				&& rc.senseRubble(rc.getLocation().add(dir)) < GameConstants.RUBBLE_OBSTRUCTION_THRESH
+				&& !locs.contains(rc.getLocation().add(dir));
 	}
 
 	private boolean buildRobot(RobotType type) throws GameActionException {
 		ArrayList<Direction> list = new ArrayList<>(Arrays.asList(Statics.directions));
-		if (!rc.hasBuildRequirements(type)){
+		if (!rc.hasBuildRequirements(type)) {
 			scavenge();
 			turns--;
 			return false;
 		}
 		while (list.size() > 0) {
-			Direction d = list.remove((int) (Math.random()*list.size()));
+			Direction d = list.remove((int) (Math.random() * list.size()));
 			if (canBuild(type, d)) {
 				try {
 					rc.build(d, type);
@@ -49,11 +52,11 @@ public class ArchonBrain implements Brain {
 		}
 		return false;
 	}
-	
+
 	private void moveTowards(Direction dir) throws GameActionException {
-		for(int i:possibleDirections) {
-			Direction candidateDirection = Direction.values()[(dir.ordinal()+i+8)%8];
-			if(rc.canMove(candidateDirection)) {
+		for (int i : possibleDirections) {
+			Direction candidateDirection = Direction.values()[(dir.ordinal() + i + 8) % 8];
+			if (rc.canMove(candidateDirection)) {
 				rc.move(candidateDirection);
 				break;
 			}
@@ -66,7 +69,8 @@ public class ArchonBrain implements Brain {
 
 	private void intialize() throws GameActionException {
 		turns = 0;
-		buildScout();
+		// buildScout();
+		lastLoc = rc.getLocation();
 		current = Routine.TURRET_CLUSTER;
 	}
 
@@ -85,125 +89,120 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenge() throws GameActionException {
-		MapLocation[] potential =  rc.sensePartLocations(-1);
+		MapLocation[] parts = rc.sensePartLocations(-1);
 		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
-		
-		if(neutrals.length!=0) {
+		// if neutral robot
+		if (neutrals.length != 0) {
 			MapLocation[] locs = new MapLocation[neutrals.length];
 			int i = 0;
-			for(RobotInfo r:neutrals) {
+			for (RobotInfo r : neutrals) {
 				locs[i] = r.location;
-				if(locs[i].distanceSquaredTo(rc.getLocation())<=2) {
-					if(rc.isCoreReady())
+				if (locs[i].distanceSquaredTo(rc.getLocation()) <= 2) {
+					if (rc.isCoreReady())
 						rc.activate(locs[i]);
 					return;
 				}
 				i++;
-			} //reaches here if cannot activate
+			} // reaches here if cannot activate
 			_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
-			if(rc.isCoreReady())
+			if (rc.isCoreReady())
 				moveTowards(_moveDirection);
 			return;
 		}
-		
-		if (potential.length == 0 || turns !=1){
-			//setRoutine(Routine.RANDOM);
+		// if no parts
+		if (parts.length == 0) {
 			randomlyMove();
 			return;
 		}
-		
-		_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), potential));
-		
-		if(rc.isCoreReady())
-			moveTowards(_moveDirection);
-	
-
+		// if parts
+		ArrayList<MapLocation> freeParts = new ArrayList<MapLocation>();
+		ArrayList<MapLocation> hardParts = new ArrayList<MapLocation>();
+		for (MapLocation l : parts) {
+			if (rc.senseRubble(l) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+				freeParts.add(l);
+			} else {
+				hardParts.add(l);
+			}
+		}
+		// if easy parts
+		if (freeParts.size() != 0) {
+			MapLocation[] array = new MapLocation[freeParts.size()];
+			int index = 0;
+			for(MapLocation l:array) {
+				array[index] = l;
+				index++;
+			}
+			moveTowards(rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), array)));
+			return;
+		}
+		// if hard parts
+		if (hardParts.size() != 0) {
+			turns--;
+		}
 	}
-	
+
 	Direction _moveDirection;
-	private void randomlyMove() throws GameActionException{
-		if (turns > 8){
+
+	private void randomlyMove() throws GameActionException {
+		if (turns > 5) {
 			rc.broadcastSignal(BROADCAST_RANGE);
 			_moveDirection = null;
 			turns = 0;
 			setRoutine(Routine.NONE);
 			return;
 		}
-		RobotInfo[] nearby = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared);
-		int allies = 0;
-		int enemies = 0;
-		for(RobotInfo r:nearby) {
-			if(r.team==rc.getTeam()) {
-				allies++;
-			} else {
-				enemies++;
-			}
-		}
-		
-		if(enemies>allies) {//run away
-			turns--;
-			MapLocation away = rc.getLocation().add(Statics.directions[0]);
-			for(RobotInfo r:nearby) {
-				if(!r.team.equals(rc.getTeam())) {
-					away = r.location;
-					break;
-				}
-			}
-			_moveDirection = away.directionTo(rc.getLocation());
-			int[] dirs = new int[]{0,1,-1,2,-2};
-			for(int i:dirs) {
-				Direction candidateDirection = Statics.directions[(_moveDirection.ordinal()+i+8)%8];
-				if(rc.canMove(candidateDirection)) {
-					rc.move(candidateDirection);
-					return;
-				}
-			}
-		}
-		
+		RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+		RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
+
+		Statics.runAway(rc, allies, enemies);
+
 		if (_moveDirection == null)
-			_moveDirection = Statics.directions[(int) (Math.random()*Statics.directions.length)];
-		
-		if (rc.canMove(_moveDirection)){
+			_moveDirection = Statics.directions[(int) (Math.random() * Statics.directions.length)];
+
+		if (rc.canMove(_moveDirection)) {
 			rc.move(_moveDirection);
 			return;
 		}
-		
+
 		ArrayList<Direction> potential = new ArrayList<>(Arrays.asList(Statics.directions));
-		while (potential.size() > 0){
-			Direction d = potential.remove((int)(Math.random()*potential.size()));
-			if (rc.canMove(d)){
+		while (potential.size() > 0) {
+			Direction d = potential.remove((int) (Math.random() * potential.size()));
+			if (rc.canMove(d)) {
 				_moveDirection = d;
 				rc.move(d);
 				return;
 			}
 		}
 	}
-	
-	private void determineRoutine(){
+
+	private void determineRoutine() {
 		if (last != Routine.TURRET_CLUSTER)
 			setRoutine(Routine.TURRET_CLUSTER);
-		else 
+		else
 			setRoutine(Routine.SCAVENGE);
 	}
-	
-	private void charge(){
-		//TODO: Implement charge
+
+	private void charge() {
+		// TODO: Implement charge
 	}
-	
-	private void navigateToAttack(MapLocation attackLoc) throws GameActionException{ //TODO: should be used in tandem with scouts to tell where to go etc
-		if(rc.getLocation().distanceSquaredTo(attackLoc)<=100) { //might want to change value
-			//TODO: need to send signals to tell soldiers to rush attackLoc
+
+	private void navigateToAttack(MapLocation attackLoc) throws GameActionException { // TODO:
+		if (rc.getLocation().distanceSquaredTo(attackLoc) <= 100) { // might
+																	// want to
+																	// change
+																	// value
+			// TODO: need to send signals to tell soldiers to rush attackLoc
 			Direction toAttack = rc.getLocation().directionTo(attackLoc);
-			if(rc.isCoreReady()&&canBuild(RobotType.SOLDIER, toAttack)) {
+			if (rc.isCoreReady() && canBuild(RobotType.SOLDIER, toAttack)) {
 				rc.build(toAttack, RobotType.SOLDIER);
 			}
-		}
-		else {
+		} else {
 			Statics.navigateTo(attackLoc, rc);
 		}
-			
+
 	}
-	
+
 	private void runTurn() throws GameActionException {
 		if (!rc.isCoreReady()) {
 			turns--;
@@ -231,11 +230,10 @@ public class ArchonBrain implements Brain {
 		default:
 			break;
 		}
-		
-		
-		//DEBUG
+
+		// DEBUG
 		String s = "";
-		switch(current){
+		switch (current) {
 		case CHARGE:
 			s = "charge";
 			break;
@@ -257,15 +255,15 @@ public class ArchonBrain implements Brain {
 		default:
 			s = "fuck";
 			break;
-		
+
 		}
 		rc.setIndicatorString(1, s);
-//		System.out.println(s);
+		// System.out.println(s);
 	}
 
 	@Override
 	public void run(RobotController rcI) {
-		rc=rcI;
+		rc = rcI;
 		try {
 			intialize();
 		} catch (GameActionException e1) {

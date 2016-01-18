@@ -138,6 +138,7 @@ public class SoldierBrain implements Brain {
 				if (priority < 2)
 					// TODO:
 					break;
+				break;
 			case CHANGE_SCHEME:
 				// TODO:
 				break;
@@ -182,8 +183,10 @@ public class SoldierBrain implements Brain {
 	}
 
 	public static void runTurn(RobotController rc) throws GameActionException {
-
-		if (!attack(rc) && rc.isCoreReady()) {
+		if (target != null && priority > 2) {
+			
+		}
+		if (!attack(rc) && rc.isCoreReady()){
 			move(rc);
 		}
 
