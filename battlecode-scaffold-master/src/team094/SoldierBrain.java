@@ -35,7 +35,6 @@ public class SoldierBrain implements Brain {
 
 	public static boolean attack(RobotController rc) throws GameActionException {
 		int myAttackRange = rc.getType().attackRadiusSquared;
-
 		if (rc.getType().canAttack() && myAttackRange > 0) {
 			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, rc.getTeam().opponent());
 			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
@@ -136,7 +135,9 @@ public class SoldierBrain implements Brain {
 			switch (SignalEncoder.getPacketType(s)) {
 			case ATTACK_ENEMY:
 				if (priority < 2)
-					// TODO:
+					priority = 2;
+					Signal e = SignalEncoder.decodeAttackEnemy(s);
+					target = e.getLocation();
 					break;
 				break;
 			case CHANGE_SCHEME:

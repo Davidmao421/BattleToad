@@ -99,26 +99,29 @@ public class SignalEncoder {
 		return new Signal(l, i, e.getTeam());
 	}
 
-	public static Signal attackEnemy(RobotIdTypePair pair) {
-		return attackEnemy(pair.id, pair.loc);
-	}
-
-	public static Signal attackEnemy(int enemyID, MapLocation loc) {
+	public static Signal encodeAttackEnemy(int id, MapLocation loc) {
+		loc = new MapLocation(loc.x - Statics.referenceLocation.x, loc.y - Statics.referenceLocation.y);
+		int x = (loc.x >> 24) + (0x000000ff & loc.x);
+		int y = (loc.y >> 24) + (0x000000ff & loc.y);
 		int part1, part2 = part1 = 0;
-		part1 = PacketType.ATTACK_ENEMY.header << 28;
-		part1 |= enemyID << 13;
-		part1 |= loc.x << 6;
-		part1 |= loc.y >> 1;
-		part2 = loc.y << 31;
-		return new Signal(loc, enemyID, Team.NEUTRAL, part1, part2);
+		part1 = PacketType.NEUTRAL_ROBOT.header << 28;
+		part1 |= x << 20;
+		part1 |= y << 12;
+		return new Signal(Statics.referenceLocation, 0, Team.ZOMBIE, part1, part2);
 	}
 
-	public static RobotIdTypePair decodeAttackEnemy(Signal s) {
-		int id = (s.getMessage()[0] & 0x0fffffff) >> 13;
-		int x = (s.getMessage()[0] & 0x000000ff) >> 6;
-		int y = (s.getMessage()[0] & 0x0000003f) << 1;
-		y += s.getMessage()[1] >> 31;
-		return new RobotIdTypePair(id, null, new MapLocation(x, y));
+	/**
+	 * 
+	 * @param s
+	 * @return signal id represents the robot type i.e.
+	 *         SignalEncoder.intToRobotType(s.getId())
+	 */
+	public static Signal decodeAttackEnemy(Signal s) {
+		int x = ((s.getMessage()[0] & 0x08000000) << 4) ^ ((s.getMessage()[0] & 0x07f00000) >> 20);
+		int y = ((s.getMessage()[0] & 0x00080000) << 12) ^ ((s.getMessage()[0] & 0x0007f000) >> 12);
+
+		MapLocation l = new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y + y);
+		return new Signal(l, 0, Team.NEUTRAL);
 	}
 
 	public static Signal encodePanic(MapLocation... locs) throws GameActionException {
