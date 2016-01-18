@@ -166,8 +166,8 @@ public class SoldierBrain implements Brain {
 			case PANIC:
 				if (priority > 3)
 					break;
-				Panic p = SignalEncoder.decodePanic(s);
-				target = Statics.closestLoc(rc.getLocation(), p.locs);
+				MapLocation[] locs = SignalEncoder.decodePanic(s);
+				target = Statics.closestLoc(rc.getLocation(), locs);
 				priority = 3;
 				break;
 			case PANIC_OVER:
