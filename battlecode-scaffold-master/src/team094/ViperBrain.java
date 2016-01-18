@@ -10,7 +10,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 
-public class ViperBrain implements Brain{
+public class ViperBrain implements Brain {
 
 	public MapLocation enemyCom, teamCom;
 
@@ -20,43 +20,47 @@ public class ViperBrain implements Brain{
 	}
 
 	public void attack(RobotController rc, RobotInfo enemy) throws GameActionException {
-		int dist = Statics.sqrDist(rc.getLocation(), enemy.location);
-		if (!rc.canAttackLocation(enemy.location))
-			if (rc.canMove(rc.getLocation().directionTo(enemy.location))) {
-				rc.move(rc.getLocation().directionTo(enemy.location));
-				return;
-			}
-		rc.attackLocation(enemy.location);
+
+		if (rc.canAttackLocation(enemy.location) && rc.isCoreReady() && rc.isWeaponReady()) {
+			rc.attackLocation(enemy.location);
+			return;
+		}
+
+		if (rc.canMove(rc.getLocation().directionTo(enemy.location)) && rc.isCoreReady()) {
+			rc.move(rc.getLocation().directionTo(enemy.location));
+			return;
+		}
 	}
+
 	/*
-	public void pussy(RobotController rc, RobotInfo[] enemies){
-		RobotInfo away = CompareStuff.moveAwayFrom(enemies, rc.getLocation());
-		if (away != null) {
-			if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
-				Statics.moveTo(CompareStuff.moveAwayFrom(enemies, rc.getLocation()).location
-						.directionTo(rc.getLocation()), rc);
-		} 
-	}
-*/
+	 * public void pussy(RobotController rc, RobotInfo[] enemies){ RobotInfo
+	 * away = CompareStuff.moveAwayFrom(enemies, rc.getLocation()); if (away !=
+	 * null) { if (rc.isCoreReady() &&
+	 * rc.canMove(away.location.directionTo(rc.getLocation())))
+	 * Statics.moveTo(CompareStuff.moveAwayFrom(enemies,
+	 * rc.getLocation()).location .directionTo(rc.getLocation()), rc); } }
+	 */
 	public void runTurn(RobotController rc) throws GameActionException {
 		RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
 		RobotInfo closestEnemy = Statics.closestRobot(enemyCom, robots);
 
-		if (Statics.sqrDist(enemyCom, closestEnemy.location) < Statics.sqrDist(closestEnemy.location, teamCom)) {
-			attack(rc, closestEnemy);
-			return;
-		}
+		if (closestEnemy != null) {
+			if (enemyCom.distanceSquaredTo(closestEnemy.location) < closestEnemy.location.distanceSquaredTo(teamCom)) {
+				attack(rc, closestEnemy);
+				return;
+			}
 
-		 robots = rc.senseNearbyRobots(-1, Team.ZOMBIE);
-		 closestEnemy = Statics.closestRobot(enemyCom, robots);
+			robots = rc.senseNearbyRobots(-1, Team.ZOMBIE);
+			closestEnemy = Statics.closestRobot(enemyCom, robots);
 
-		if (Statics.sqrDist(enemyCom, closestEnemy.location) > Statics.sqrDist(closestEnemy.location, teamCom)) {
-			attack(rc, closestEnemy);
-			return;
+			if (Statics.sqrDist(enemyCom, closestEnemy.location) > Statics.sqrDist(closestEnemy.location, teamCom)) {
+				attack(rc, closestEnemy);
+				return;
+			}
+		} else {
+			if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
+				rc.move(rc.getLocation().directionTo(enemyCom));
 		}
-		
-		if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
-			rc.move(rc.getLocation().directionTo(enemyCom));
 	}
 
 	public void run(RobotController rc) {
@@ -68,7 +72,8 @@ public class ViperBrain implements Brain{
 
 		while (true) {
 			Clock.yield();
-			if (!rc.isCoreReady()) continue;
+			if (!rc.isCoreReady())
+				continue;
 			try {
 				runTurn(rc);
 			} catch (Exception e) {

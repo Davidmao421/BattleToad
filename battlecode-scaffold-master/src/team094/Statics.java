@@ -42,19 +42,23 @@ public class Statics {
 		return true;
 	}
 
-	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info) {
+	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info, int minDist) {
 		if (info.length == 0)
 			return null;
 		RobotInfo closest = info[0];
 		int closestDist = Integer.MAX_VALUE;
 		for (int i = 1; i < info.length; i++) {
 			int dist = sqrDist(loc, info[i].location);
-			if (dist < closestDist) {
+			if (dist < closestDist && dist > minDist) {
 				closestDist = dist;
 				closest = info[i];
 			}
 		}
 		return closest;
+	}
+	
+	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){
+		return closestRobot(loc,info,0);
 	}
 
 	public static int sqrDist(MapLocation loc1, MapLocation loc2) {
