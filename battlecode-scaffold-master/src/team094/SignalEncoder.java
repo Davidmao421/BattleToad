@@ -111,8 +111,8 @@ public class SignalEncoder {
 		}
 	}
 	
-	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc, MapLocation referenceLoc){
-		loc = new MapLocation(loc.x-referenceLoc.x,loc.y-referenceLoc.y);
+	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc){
+		loc = new MapLocation(loc.x-Statics.referenceLocation.x,loc.y-Statics.referenceLocation.y);
 		int x = (loc.x >> 24) + (0x000000ff & loc.x);
 		int y = (loc.y >> 24) + (0x000000ff & loc.y);
 		int part1, part2 = part1 = 0;
@@ -120,7 +120,7 @@ public class SignalEncoder {
 		part1 |= x << 20;
 		part1 |= y << 12;
 		part1 |= robotTypeToInt(type) << 8;
-		return new Signal(referenceLoc, 0, Team.NEUTRAL,part1, part2);
+		return new Signal(Statics.referenceLocation, 0, Team.NEUTRAL,part1, part2);
 	}
 	
 	/**
@@ -133,17 +133,17 @@ public class SignalEncoder {
 		int x = ((s.getMessage()[0]&0x08000000) << 4) ^ ((s.getMessage()[0] & 0x07f00000) >> 20);
 		int y = ((s.getMessage()[0]&0x00080000) << 12) ^ ((s.getMessage()[0] & 0x0007f000) >> 12);
 
-		MapLocation l = new MapLocation(s.getLocation().x+ x, s.getLocation().y+y);
+		MapLocation l = new MapLocation(Statics.referenceLocation.x+ x, Statics.referenceLocation.y+y);
 		int robotType = (0x000000f0 & s.getMessage()[0] >> 8);
 		return new Signal (l, robotType, Team.NEUTRAL);
 	}
 
-	public static Signal encodeRobot(RobotIdTypePair pair, MapLocation referenceLoc){
-		return encodeRobot(pair.type, pair.id, pair.loc, referenceLoc);
+	public static Signal encodeRobot(RobotIdTypePair pair){
+		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
 
-	public static Signal encodeRobot(RobotType type, int id, MapLocation loc, MapLocation referenceLoc) {
-		loc = new MapLocation(loc.x-referenceLoc.x,loc.y-referenceLoc.y);
+	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
+		loc = new MapLocation(loc.x-Statics.referenceLocation.x,loc.y-Statics.referenceLocation.y);
 		int x = (loc.x >> 24) + (0x000000ff & loc.x);
 		int y = (loc.y >> 24) + (0x000000ff & loc.y); 
 		
@@ -166,7 +166,7 @@ public class SignalEncoder {
 		int y = ((e.getMessage()[0]&0x00000000) << 31) ^ ((e.getMessage()[1] & 0x0007f000) >> 25);
 		
 		
-		return new RobotIdTypePair(id, type, new MapLocation(x, y));
+		return new RobotIdTypePair(id, type, new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y));
 	}
 	
 	public static Signal attackEnemy(RobotIdTypePair pair){

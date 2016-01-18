@@ -66,8 +66,9 @@ public class ArchonBrain implements Brain {
 
 	private void intialize() throws GameActionException {
 		turns = 0;
-//		buildScout();
+		buildScout();
 		current = Routine.TURRET_CLUSTER;
+		Statics.referenceLocation = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 	}
 
 	private void buildTurretCluster() throws GameActionException {
@@ -83,7 +84,7 @@ public class ArchonBrain implements Brain {
 			for (RobotInfo r : robots)
 				if (r.team == rc.getTeam() && r.type == RobotType.TURRET
 						&& r.location.distanceSquaredTo(rc.getLocation()) == 1) {
-					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location, rc.getLocation());
+					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location);
 					rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], BROADCAST_RANGE);
 				}
 			break;
@@ -126,11 +127,7 @@ public class ArchonBrain implements Brain {
 		
 		if(rc.isCoreReady())
 			moveTowards(_moveDirection);
-		
-		//if (rc.canMove(_moveDirection)){
-		//	rc.move(_moveDirection);
-		//	return;
-		//}
+	
 
 	}
 	

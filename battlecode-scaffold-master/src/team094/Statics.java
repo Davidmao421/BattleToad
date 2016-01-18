@@ -14,6 +14,8 @@ public class Statics {
 
 	public static Direction[] directions = Direction.values();
 	
+	public static MapLocation referenceLocation;
+	
 	public static int maxCord = 80;
 
 	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){

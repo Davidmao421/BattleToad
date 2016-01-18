@@ -1,9 +1,9 @@
 package team094;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 
 
 import battlecode.common.*;
@@ -20,13 +20,13 @@ public class ScoutBrain implements Brain {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
-		sentSignals = new TreeSet<>();
+		sentSignals = new HashSet<>();
 	}
 	
 	public void addBroadcast(Signal s){
 		if (sentSignals.contains(s))
 			return;
-		addBroadcast(s);
+		broadcastQueue.add(s);
 	}
 
 	public void radiate() throws GameActionException {
@@ -61,14 +61,14 @@ public class ScoutBrain implements Brain {
 
 	public void runTurn() throws GameActionException {
 		senseBroadcast();
-		radiate(); // TODO: working movement
 		broadcast();
+		radiate(); // TODO: working movement
 	}
 
 	public void broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.poll();
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], -1); //TODO: figure out a good actual broadcast range
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); //TODO: figure out a good actual broadcast range
 			sentSignals.add(s);
 			broadcast();
 		}
@@ -84,6 +84,7 @@ public class ScoutBrain implements Brain {
 
 		while (true) {
 			Clock.yield();
+			if (!rc.isCoreReady()) continue;
 			try {
 				runTurn();
 			} catch (Exception e) {
