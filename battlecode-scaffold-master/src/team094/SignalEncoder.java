@@ -29,7 +29,6 @@ public class SignalEncoder {
 			return 6;
 		default:
 			return -1;
-
 		}
 	}
 
@@ -167,12 +166,13 @@ public class SignalEncoder {
 		switch (length) {
 		case 3:
 			x = ((0x02000000 & s.getMessage()[1]) << 6) | ((0x01fc0000 & s.getMessage()[1]) >> 18);
-			y = ((0x00020000 & s.getMessage()[1])  << 14) | ((0x0001fc00 & s.getMessage()[1]) << 10);
-			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y); 
+			y = ((0x00020000 & s.getMessage()[1]) << 14) | ((0x0001fc00 & s.getMessage()[1]) << 10);
+			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y);
 		case 2:
 			x = ((0x00000200 & s.getMessage()[0]) << 22) | ((0x000001fc & s.getMessage()[0]) >> 2);
-			y = ((0x00000002 & s.getMessage()[0]) << 30) | ((0x00000001 & s.getMessage()[0]) << 6) | ((0xfc000000 & s.getMessage()[1]) >> 26);
-			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y); 
+			y = ((0x00000002 & s.getMessage()[0]) << 30) | ((0x00000001 & s.getMessage()[0]) << 6)
+					| ((0xfc000000 & s.getMessage()[1]) >> 26);
+			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y);
 		case 1:
 			x = ((0x02000000 & s.getMessage()[0]) << 6) | ((0x01fc0000 & s.getMessage()[0]) >> 18);
 			y = ((0x00020000 & s.getMessage()[0]) << 14) | ((0x0001fc00 & s.getMessage()[0]) >> 10);
@@ -186,13 +186,14 @@ public class SignalEncoder {
 	}
 
 	public static Signal encodePanicOver(int id) {
-		// TODO:
-		return null;
+		int part1, part2 = part1 = 0;
+		part1 |= PacketType.PANIC_OVER.header << 28;
+		return new Signal(new MapLocation(0,0), id, Team.ZOMBIE, part1, part2);
 	}
 
 	public static int decodePanicOver(Signal s) {
 		// TODO:
-		return -1;
+		return s.getID();
 	}
 
 	public static Signal encodeParts(MapLocation mapLoc, double numParts) {
