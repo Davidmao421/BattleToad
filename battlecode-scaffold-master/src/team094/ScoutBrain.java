@@ -21,10 +21,11 @@ public class ScoutBrain implements Brain {
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
 		sentSignals = new HashSet<>();
+		
 	}
 
 	public void addBroadcast(Signal s) {
-		if (sentSignals.contains(s) || broadcastQueue.contains(s))
+		if (CompareStuff.containsSignal(s, broadcastQueue) || CompareStuff.containsSignal(s, sentSignals))
 			return;
 		broadcastQueue.add(s);
 	}

@@ -148,4 +148,10 @@ import battlecode.common.*;
 			return null;			
 		}
 		
+		
+		public static boolean containsSignal(Signal s, Iterable<Signal> col){
+			for (Signal i : col)
+				if (i.getID() == s.getID() && i.getLocation().equals(s.getLocation()) && i.getMessage()[0] == s.getMessage()[0] && i.getMessage()[1] == s.getMessage()[1]) return true;
+			return false;
+		}
 }
