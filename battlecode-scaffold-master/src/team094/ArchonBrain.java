@@ -78,7 +78,7 @@ public class ArchonBrain implements Brain {
 		case 3:
 			buildRobot(RobotType.SOLDIER);
 			break;
-		case 4:
+		/*case 4:
 			buildRobot(RobotType.TURRET);
 			RobotInfo[] robots = rc.senseNearbyRobots();
 			for (RobotInfo r : robots)
@@ -87,7 +87,7 @@ public class ArchonBrain implements Brain {
 					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location);
 					rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], BROADCAST_RANGE);
 				}
-			break;
+			break;*/
 		default:
 			setRoutine(Routine.NONE);
 			turns = 0;
@@ -118,7 +118,7 @@ public class ArchonBrain implements Brain {
 		}
 		
 		if (potential.length == 0 || turns !=1){
-			setRoutine(Routine.RANDOM);
+			//setRoutine(Routine.RANDOM);
 			randomlyMove();
 			return;
 		}
@@ -162,7 +162,7 @@ public class ArchonBrain implements Brain {
 			_moveDirection = away.directionTo(rc.getLocation());
 			int[] dirs = new int[]{0,1,-1,2,-2};
 			for(int i:dirs) {
-				Direction candidateDirection = Statics.directions[_moveDirection.ordinal()+i+8%8];
+				Direction candidateDirection = Statics.directions[(_moveDirection.ordinal()+i+8)%8];
 				if(rc.canMove(candidateDirection)) {
 					rc.move(candidateDirection);
 					return;
