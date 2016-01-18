@@ -81,7 +81,7 @@ public class SoldierBrain implements Brain {
 			} else if (shortestDistance >= 9) {
 				Statics.moveTo(dir.opposite(), rc);
 			} else {
-				if (digTowardsParts(rc)) {
+				if (digToWin(rc)) {
 					return;
 				}
 				if (digNearby(rc)) {
@@ -130,8 +130,9 @@ public class SoldierBrain implements Brain {
 	private static boolean digNearby(RobotController rc) throws GameActionException {
 		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
-			if (rc.senseRubble(
-					rc.getLocation().add(Statics.directions[(i + k) % 8])) > GameConstants.RUBBLE_SLOW_THRESH) {
+			MapLocation loc = rc.getLocation().add(Statics.directions[(i + k) % 8]);
+			if (rc.senseRubble(loc)
+					 > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
 				rc.clearRubble(Statics.directions[i]);
 				return true;
 			}
@@ -139,15 +140,35 @@ public class SoldierBrain implements Brain {
 		return false;
 	}
 
-	private static boolean digTowardsParts(RobotController rc) throws GameActionException {
+	private static boolean digToWin(RobotController rc) throws GameActionException {
 		MapLocation[] parts = rc.sensePartLocations(-1);
+		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+		
+		if (neutrals.length!=0) {
+			MapLocation[] locs = new MapLocation[neutrals.length];
+			for(int i = 0; i < neutrals.length; i++) {
+				locs[i] = neutrals[i].location;
+			}
+			MapLocation loc = Statics.closestLoc(rc.getLocation(), locs);
+			Direction dir = rc.getLocation().directionTo(loc);
+			for (int i : new int[] { 0, 1, -1 }) { // check 3 directions
+				Direction candidateDir = Statics.directions[(dir.ordinal() + 8 + i) % 8];
+				if (rc.senseRubble(rc.getLocation().add(candidateDir)) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+					rc.clearRubble(candidateDir);
+					return true;
+				}
+			}
+			Statics.moveTo(dir, rc);
+			return true;
+		}
 		if (parts.length != 0) { // are there parts
 			MapLocation loc = Statics.closestLoc(rc.getLocation(), parts);
 			if (rc.senseRubble(loc) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) { // obstructed
 				Direction dir = rc.getLocation().directionTo(loc);
 				for (int i : new int[] { 0, 1, -1 }) { // check 3 directions
 					Direction candidateDir = Statics.directions[(dir.ordinal() + 8 + i) % 8];
-					if (rc.senseRubble(rc.getLocation().add(candidateDir)) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+					MapLocation digLoc = rc.getLocation().add(candidateDir);
+					if (rc.senseRubble(digLoc) > GameConstants.RUBBLE_OBSTRUCTION_THRESH && rc.onTheMap(digLoc)) {
 						rc.clearRubble(candidateDir);
 						return true;
 					}
