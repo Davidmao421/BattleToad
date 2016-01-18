@@ -50,10 +50,10 @@ public class ScoutBrain implements Brain {
 				continue;
 			if (rc.getTeam().opponent() == info.team
 					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
-				addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location, rc.getLocation()));
+				addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
 			}
 			if (info.team.equals(Team.NEUTRAL)) {
-				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location, rc.getLocation()));
+				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
 			}
 		}
 
@@ -61,17 +61,19 @@ public class ScoutBrain implements Brain {
 
 	public void runTurn() throws GameActionException {
 		senseBroadcast();
-		broadcast();
+		if (broadcast()) return;
 		radiate(); // TODO: working movement
 	}
 
-	public void broadcast() throws GameActionException {
+	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.poll();
 			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); //TODO: figure out a good actual broadcast range
 			sentSignals.add(s);
 			broadcast();
+			return true;
 		}
+		return false;
 	}
 
 	public void run(RobotController rc1) {
