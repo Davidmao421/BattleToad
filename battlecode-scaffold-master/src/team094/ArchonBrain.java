@@ -62,13 +62,15 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void moveTowards(Direction dir) throws GameActionException {
-		for (int i : possibleDirections) {
-			Direction candidateDirection = Direction.values()[(dir.ordinal() + i + 8) % 8];
-			if (rc.canMove(candidateDirection)) {
-				rc.move(candidateDirection);
-				break;
-			}
-		}
+		Statics.moveTo(dir, rc);
+		return;
+//		for (int i : possibleDirections) {
+//			Direction candidateDirection = Direction.values()[(dir.ordinal() + i + 8) % 8];
+//			if (rc.canMove(candidateDirection)) {
+//				rc.move(candidateDirection);
+//				break;
+//			}
+//		}
 	}
 
 	private boolean buildScout() throws GameActionException {
@@ -169,9 +171,13 @@ public class ArchonBrain implements Brain {
 				handleHardParts(sensedParts, parts, hardParts);
 				return;
 			}
-
+			
+			RobotInfo[] friends = rc.senseNearbyRobots(RobotType.SOLDIER.sensorRadiusSquared, rc.getTeam());
+			
 			if (rc.getLocation().distanceSquaredTo(loc) > 7) {
 				moveTowards(rc.getLocation().directionTo(loc));
+			} else if(friends.length < 5) {
+				setRoutine(Routine.TURRET_CLUSTER);
 			}
 		}
 	}
@@ -216,8 +222,7 @@ public class ArchonBrain implements Brain {
 	Direction _moveDirection;
 
 	private void randomlyMove() throws GameActionException {
-		if (turns > 5) {
-			rc.broadcastSignal(BROADCAST_RANGE);
+		if (turns > 4) {
 			_moveDirection = null;
 			turns = 0;
 			setRoutine(Routine.NONE);
@@ -225,9 +230,9 @@ public class ArchonBrain implements Brain {
 		}
 		RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
 		RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-//		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
+		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
 
-		Statics.runAway(rc, allies, enemies);
+		Statics.runAway(rc, allies, Statics.combineRobotInfo(enemies,zombies));
 
 		if (_moveDirection == null)
 			_moveDirection = Statics.directions[(int) (Math.random() * Statics.directions.length)];
