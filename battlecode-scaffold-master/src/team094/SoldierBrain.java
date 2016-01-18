@@ -122,6 +122,11 @@ public class SoldierBrain implements Brain {
 			}
 		}
 		if (!shouldAttack && rc.isCoreReady()) {
+			for(Signal s:rc.emptySignalQueue()) {
+				if (s.getTeam().equals(rc.getTeam())) {
+					lastArcLoc = s.getLocation();
+				}
+			}
 			RobotInfo[] nearby = rc.senseNearbyRobots();
 			int numArchons = 0;
 			ArrayList<MapLocation> arcLoc = new ArrayList<MapLocation>();
@@ -180,17 +185,7 @@ public class SoldierBrain implements Brain {
 						lastArcLoc = null;
 					}
 				} else {
-					nearby = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared,rc.getTeam());
-					if (nearby.length!=0){
-						MapLocation[] locs = new MapLocation[nearby.length];
-						int index = 0;
-						for(RobotInfo r:nearby) {
-							locs[index] = r.location;
-							index++;
-						}
-						Direction dir = rc.getLocation().directionTo(Statics.com(locs));
-						Statics.moveTo(dir, rc);
-					}
+					//rc.senseNearbyRobots(rc.getType().sensorRadiusSquared);
 				}	
 			}
 			/*
