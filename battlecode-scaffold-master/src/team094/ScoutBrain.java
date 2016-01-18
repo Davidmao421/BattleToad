@@ -77,7 +77,6 @@ public class ScoutBrain implements Brain {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
 			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO: Figure out a good broadcast range
-			rc.setIndicatorString(0, "Broadcast queue: " + broadcastQueue.size());
 			sentSignals.add(s);
 			broadcast();
 

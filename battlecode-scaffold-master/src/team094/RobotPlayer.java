@@ -12,6 +12,8 @@ public class RobotPlayer {
 	 **/
 
 	public static void run(RobotController rc) {
+		Statics.referenceLocation = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
+		
 		switch (rc.getType()) {
 		case ARCHON:
 			brain = new ArchonBrain();
