@@ -15,14 +15,14 @@ public class ArchonBrain implements Brain {
 	private int[] possibleDirections = new int[] { 0, 1, -1, 2, 3, -2, -3, 4 };
 	private static final int BROADCAST_RANGE = 70;
 	private RobotController rc;
-	private MapLocation lastLoc;
-	
+//	private MapLocation lastLoc;
+
 	private List<MapLocation> knownParts;
-	private List<MapLocation> knownEnemyArchons;
+//	private List<MapLocation> knownEnemyArchons;
 	private List<MapLocation> knownNeutralRobots;
-	
+
 	private Map<Integer, RobotInfo> robots;
-	
+
 	int panicRobot = -1;
 
 	private void setRoutine(Routine r) {
@@ -78,13 +78,13 @@ public class ArchonBrain implements Brain {
 	private void intialize() throws GameActionException {
 		turns = 0;
 		buildScout();
-		lastLoc = rc.getLocation();
+//		lastLoc = rc.getLocation();
 		current = Routine.TURRET_CLUSTER;
-		
-		knownEnemyArchons = new LinkedList<>();
-		knownNeutralRobots = new LinkedList<>();
-		knownParts = new LinkedList<>();
-		robots = new TreeMap<>();
+
+//		knownEnemyArchons = new LinkedList<MapLocation>();
+		knownNeutralRobots = new LinkedList<MapLocation>();
+		knownParts = new LinkedList<MapLocation>();
+		robots = new TreeMap<Integer, RobotInfo>();
 	}
 
 	private void buildTurretCluster() throws GameActionException {
@@ -100,16 +100,23 @@ public class ArchonBrain implements Brain {
 			break;
 		}
 	}
-
-	private void scavenge() throws GameActionException {
-		MapLocation[] sensedParts = rc.sensePartLocations(-1);
-		MapLocation[] parts = (MapLocation[]) Statics.combineArrays(sensedParts, knownParts.toArray());
-		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+	
+	private void scavengeNeutrals() throws GameActionException{
+		RobotInfo[] sensedNeutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+		RobotInfo[] neutrals = Statics.combineRobotInfo(sensedNeutrals, knownNeutralRobots.toArray(new RobotInfo[0]));
+		
+		
 		// if neutral robot
 		if (neutrals.length != 0) {
 			MapLocation[] locs = new MapLocation[neutrals.length];
 			int i = 0;
 			for (RobotInfo r : neutrals) {
+				if (r.location.distanceSquaredTo(rc.getLocation()) < rc.getType().sensorRadiusSquared && !Statics.contains(r, sensedNeutrals)){
+					knownNeutralRobots.remove(r);
+					if (knownNeutralRobots.size() + sensedNeutrals.length < 1)
+						return;
+					continue;
+				}
 				locs[i] = r.location;
 				if (locs[i].distanceSquaredTo(rc.getLocation()) <= 2) {
 					if (rc.isCoreReady())
@@ -123,11 +130,65 @@ public class ArchonBrain implements Brain {
 				moveTowards(_moveDirection);
 			return;
 		}
+	}
+	
+	private void handleFreeParts(MapLocation[] sensedParts, MapLocation[] parts, List<MapLocation> freeParts) throws GameActionException{
+		if (freeParts.size() != 0) {
+			MapLocation[] array = new MapLocation[freeParts.size()];
+			int index = 0;
+			for (MapLocation l : freeParts) {
+				array[index] = l;
+				index++;
+			}
+			MapLocation partLoc = Statics.closestLoc(rc.getLocation(), array);
+			if (rc.getLocation().distanceSquaredTo(partLoc) < rc.getType().sensorRadiusSquared
+					&& !Statics.contains(partLoc, sensedParts)) {
+				knownParts.remove(partLoc);
+				freeParts.remove(partLoc);
+				handleFreeParts(sensedParts, parts, freeParts);
+				return;
+			}
+			moveTowards(rc.getLocation().directionTo(partLoc));
+			return;
+		}
+	}
+
+	private void handleHardParts(MapLocation[] sensedParts, MapLocation[] parts, List<MapLocation> hardParts) throws GameActionException{
+		if (hardParts.size() != 0) {
+			MapLocation[] array = new MapLocation[hardParts.size()];
+			int index = 0;
+			for (MapLocation l : hardParts) {
+				array[index] = l;
+				index++;
+			}
+			MapLocation loc = Statics.closestLoc(rc.getLocation(), array);
+			if (rc.getLocation().distanceSquaredTo(loc) < rc.getType().sensorRadiusSquared 
+					&& !Statics.contains(loc, sensedParts)) {
+				knownParts.remove(loc);
+				hardParts.remove(loc);
+				handleHardParts(sensedParts, parts, hardParts);
+				return;
+			}
+
+			if (rc.getLocation().distanceSquaredTo(loc) > 7) {
+				moveTowards(rc.getLocation().directionTo(loc));
+			}
+		}
+	}
+	
+	private void scavenge() throws GameActionException {
+		MapLocation[] sensedParts = rc.sensePartLocations(-1);
+		MapLocation[] parts = new MapLocation[0];
+		parts = Statics.combineLocs(sensedParts, knownParts.toArray(new MapLocation[0]));
+
+		scavengeNeutrals();
+		
 		// if no parts
 		if (parts.length == 0) {
 			randomlyMove();
 			return;
 		}
+		
 		// if parts
 		ArrayList<MapLocation> freeParts = new ArrayList<MapLocation>();
 		ArrayList<MapLocation> hardParts = new ArrayList<MapLocation>();
@@ -138,47 +199,17 @@ public class ArchonBrain implements Brain {
 				hardParts.add(l);
 			}
 		}
-		
-		// if easy parts
-		//I am SO sorry for this but it's the easiest way. please forgive me code gods
-		checkFree:
-		if (freeParts.size() != 0) {
-			MapLocation[] array = new MapLocation[freeParts.size()];
-			int index = 0;
-			for(MapLocation l:freeParts) {
-				array[index] = l;
-				index++;
-			}
-			MapLocation partLoc = Statics.closestLoc(rc.getLocation(), array);
-			if (rc.getLocation().distanceSquaredTo(partLoc) < rc.getType().sensorRadiusSquared && knownParts.contains(partLoc) && !Statics.contains(partLoc, sensedParts))
-			{
-				knownParts.remove(partLoc);
-				freeParts.remove(partLoc);
-				break checkFree; //Shit I suck at life.
-			}
-			moveTowards(rc.getLocation().directionTo(partLoc));
-			return;
-		}
-		
-		// if hard parts
-		checkHard: //FML this is by far the best way of doing this
-		if (hardParts.size() != 0) {
-			MapLocation[] array = new MapLocation[hardParts.size()];
-			int index = 0;
-			for(MapLocation l:hardParts) {
-				array[index] = l;
-				index++;
-			}
-			MapLocation loc = Statics.closestLoc(rc.getLocation(), array);
-			if (rc.getLocation().distanceSquaredTo(loc) < rc.getType().sensorRadiusSquared && knownParts.contains(loc) && !Statics.contains(loc, sensedParts)){
-				knownParts.remove(loc);
-				hardParts.remove(loc);
-				break checkHard; //Again I'm really really sorry
-			}
 
-			if (rc.getLocation().distanceSquaredTo(loc) > 7) {
-				moveTowards(rc.getLocation().directionTo(loc));
-			}
+		// if easy parts
+		handleFreeParts(sensedParts, parts, freeParts);
+
+		// if hard parts
+		handleHardParts(sensedParts, parts, hardParts);
+	
+		//Parts could have already been taken
+		if (knownParts.size() + sensedParts.length < 1) {
+			randomlyMove();
+			return;
 		}
 	}
 
@@ -194,7 +225,7 @@ public class ArchonBrain implements Brain {
 		}
 		RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
 		RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
+//		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
 
 		Statics.runAway(rc, allies, enemies);
 
@@ -224,35 +255,38 @@ public class ArchonBrain implements Brain {
 			setRoutine(Routine.SCAVENGE);
 	}
 
-	private void charge() {
-		// TODO: Implement charge
-	}
+//	private void charge() {
+//		// TODO: Implement charge
+//	}
 
-	private void navigateToAttack(MapLocation attackLoc) throws GameActionException { // TODO:
-		if (rc.getLocation().distanceSquaredTo(attackLoc) <= 100) { // might
-																	// want to
-																	// change
-																	// value
-			// TODO: need to send signals to tell soldiers to rush attackLoc
-			Direction toAttack = rc.getLocation().directionTo(attackLoc);
-			if (rc.isCoreReady() && canBuild(RobotType.SOLDIER, toAttack)) {
-				rc.build(toAttack, RobotType.SOLDIER);
-			}
-		} else {
-			Statics.navigateTo(attackLoc, rc);
-		}
-
-	}
+//	private void navigateToAttack(MapLocation attackLoc) throws GameActionException { // TODO:
+//		if (rc.getLocation().distanceSquaredTo(attackLoc) <= 100) { // might
+//																	// want to
+//																	// change
+//																	// value
+//			// TODO: need to send signals to tell soldiers to rush attackLoc
+//			Direction toAttack = rc.getLocation().directionTo(attackLoc);
+//			if (rc.isCoreReady() && canBuild(RobotType.SOLDIER, toAttack)) {
+//				rc.build(toAttack, RobotType.SOLDIER);
+//			}
+//		} else {
+//			Statics.navigateTo(attackLoc, rc);
+//		}
+//
+//	}
 
 	private void runTurn() throws GameActionException {
 		Signal[] signals = rc.emptySignalQueue();
-		for (Signal s : signals){
+		for (Signal s : signals) {
+			//I have no clue what the fuck is supposed to happen here
+			if (s.getMessage() == null)
+				continue;
 			switch (SignalEncoder.getPacketType(s)) {
 			case ATTACK_ENEMY:
-				//TODO: decide what archons should do
+				// TODO: decide what archons should do
 				break;
 			case CHANGE_SCHEME:
-				//TODO: implement schemes
+				// TODO: implement schemes
 				break;
 			case DEAD:
 				int id = SignalEncoder.decodeDead(s);
@@ -261,23 +295,23 @@ public class ArchonBrain implements Brain {
 				robots.remove(id);
 				break;
 			case ECHO:
-				//Lulz
+				// Lulz
 				break;
 			case LOCAL_ATTACK:
-				//TODO: Figure this shit out
+				// TODO: Figure this shit out
 				break;
 			case NEUTRAL_ROBOT:
 				Signal neutral = SignalEncoder.decodeNeutralRobot(s);
 				knownNeutralRobots.add(neutral.getLocation());
 				break;
 			case NEW_ROBOT:
-				//Archon prob sending this out
+				// Archon prob sending this out
 				break;
 			case OTHER:
-				//WTF
+				// WTF
 				break;
 			case PANIC:
-				//TODO: Decide what to do
+				// TODO: Decide what to do
 				break;
 			case PANIC_OVER:
 				break;
@@ -289,8 +323,7 @@ public class ArchonBrain implements Brain {
 				break;
 			}
 		}
-		
-		
+
 		if (!rc.isCoreReady()) {
 			turns--;
 			return;
