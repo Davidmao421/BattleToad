@@ -33,7 +33,6 @@ public class SoldierBrain implements Brain {
 
 
 	public void intialize(RobotController rc) {
-
 	}
 
 	public static void runTurnPack(RobotController rc) throws GameActionException {
@@ -103,21 +102,13 @@ public class SoldierBrain implements Brain {
 				if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
 					Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
 							.directionTo(rc.getLocation()), rc); //TODO: possibly lead stronger zombies towards enemy
-			} 
-			else if (enemiesWithinRange.length > 0) { // CURRENTLY PRIORITIZES
-													// MACHINES (PROBABLY WANT
-													// ZOMBIES BECAUSE THEY
-													// DOUBLE DAMAGE)
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(enemiesWithinRange[0].location);
-				}
-			} else if (zombiesWithinRange.length > 0) {
-				shouldAttack = true;
-				// Check if weapon is ready
-				if (rc.isWeaponReady()) {
-					rc.attackLocation(zombiesWithinRange[0].location);
+			} else {
+				RobotInfo target = CompareStuff.soldierCompare(enemiesWithinRange, zombiesWithinRange);
+				if(target!=null) {
+					shouldAttack = true;
+					if (rc.isWeaponReady()) {
+						rc.attackLocation(target.location);
+					}
 				}
 			}
 		}
@@ -171,6 +162,7 @@ public class SoldierBrain implements Brain {
 					if (right && !left) {
 						rc.move(dir.rotateRight().rotateRight());
 					}
+					
 				}
 			} else { //No Archons nearby
 				if(lastArcLoc != null) {
