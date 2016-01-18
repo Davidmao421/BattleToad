@@ -35,6 +35,7 @@ public class ScoutBrain implements Brain {
 				rotatesLeft = !rotatesLeft;
 			}
 		}
+		
 	}
 
 	public void addBroadcast(Signal s) {
@@ -45,16 +46,16 @@ public class ScoutBrain implements Brain {
 
 	public void radiate() throws GameActionException {
 		Direction d = teamCom.directionTo(enemyCom);
-		if (rotatesLeft)
-			d = d.rotateLeft();
-		if (rotatesRight)
-			d = d.rotateRight();
+//		if (rotatesLeft)
+//			d = d.rotateLeft();
+//		if (rotatesRight)
+//			d = d.rotateRight();
 
 		MapLocation currentLoc = rc.getLocation();
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		for (RobotInfo r : robots) {
-			if (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
-					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
+			if ((r.team == rc.getTeam().opponent()) && (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
+					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared)) {
 				radiate = false;
 				return;
 			}
@@ -98,7 +99,8 @@ public class ScoutBrain implements Brain {
 		rc.setIndicatorString(0, "Radiate: " + radiate);
 		if (radiate) {
 			radiate(); // TODO: working movement
-		} else if (radiate == false) {
+		} 
+		if (!radiate) {
 			move();
 		}
 
