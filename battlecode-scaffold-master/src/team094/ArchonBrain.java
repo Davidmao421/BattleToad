@@ -16,6 +16,14 @@ public class ArchonBrain implements Brain {
 	private static final int BROADCAST_RANGE = 70;
 	private RobotController rc;
 	private MapLocation lastLoc;
+	
+	private List<MapLocation> knownParts;
+	private List<MapLocation> knownEnemyArchons;
+	private List<MapLocation> knownNeutralRobots;
+	
+	private Map<Integer, RobotInfo> robots;
+	
+	int panicRobot = -1;
 
 	private void setRoutine(Routine r) {
 		last = current;
@@ -72,6 +80,11 @@ public class ArchonBrain implements Brain {
 		buildScout();
 		lastLoc = rc.getLocation();
 		current = Routine.TURRET_CLUSTER;
+		
+		knownEnemyArchons = new LinkedList<>();
+		knownNeutralRobots = new LinkedList<>();
+		knownParts = new LinkedList<>();
+		robots = new TreeMap<>();
 	}
 
 	private void buildTurretCluster() throws GameActionException {
@@ -89,7 +102,8 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenge() throws GameActionException {
-		MapLocation[] parts = rc.sensePartLocations(-1);
+		MapLocation[] sensedParts = rc.sensePartLocations(-1);
+		MapLocation[] parts = (MapLocation[]) Statics.combineArrays(sensedParts, knownParts.toArray());
 		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
 		// if neutral robot
 		if (neutrals.length != 0) {
@@ -124,7 +138,10 @@ public class ArchonBrain implements Brain {
 				hardParts.add(l);
 			}
 		}
+		
 		// if easy parts
+		//I am SO sorry for this but it's the easiest way. please forgive me code gods
+		checkFree:
 		if (freeParts.size() != 0) {
 			MapLocation[] array = new MapLocation[freeParts.size()];
 			int index = 0;
@@ -132,10 +149,19 @@ public class ArchonBrain implements Brain {
 				array[index] = l;
 				index++;
 			}
-			moveTowards(rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), array)));
+			MapLocation partLoc = Statics.closestLoc(rc.getLocation(), array);
+			if (rc.getLocation().distanceSquaredTo(partLoc) < rc.getType().sensorRadiusSquared && knownParts.contains(partLoc) && !Statics.contains(partLoc, sensedParts))
+			{
+				knownParts.remove(partLoc);
+				freeParts.remove(partLoc);
+				break checkFree; //Shit I suck at life.
+			}
+			moveTowards(rc.getLocation().directionTo(partLoc));
 			return;
 		}
+		
 		// if hard parts
+		checkHard: //FML this is by far the best way of doing this
 		if (hardParts.size() != 0) {
 			MapLocation[] array = new MapLocation[hardParts.size()];
 			int index = 0;
@@ -144,6 +170,12 @@ public class ArchonBrain implements Brain {
 				index++;
 			}
 			MapLocation loc = Statics.closestLoc(rc.getLocation(), array);
+			if (rc.getLocation().distanceSquaredTo(loc) < rc.getType().sensorRadiusSquared && knownParts.contains(loc) && !Statics.contains(loc, sensedParts)){
+				knownParts.remove(loc);
+				hardParts.remove(loc);
+				break checkHard; //Again I'm really really sorry
+			}
+
 			if (rc.getLocation().distanceSquaredTo(loc) > 7) {
 				moveTowards(rc.getLocation().directionTo(loc));
 			}
@@ -213,6 +245,52 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn() throws GameActionException {
+		Signal[] signals = rc.emptySignalQueue();
+		for (Signal s : signals){
+			switch (SignalEncoder.getPacketType(s)) {
+			case ATTACK_ENEMY:
+				//TODO: decide what archons should do
+				break;
+			case CHANGE_SCHEME:
+				//TODO: implement schemes
+				break;
+			case DEAD:
+				int id = SignalEncoder.decodeDead(s);
+				if (robots.containsKey(id))
+					buildRobot(robots.get(id).type);
+				robots.remove(id);
+				break;
+			case ECHO:
+				//Lulz
+				break;
+			case LOCAL_ATTACK:
+				//TODO: Figure this shit out
+				break;
+			case NEUTRAL_ROBOT:
+				Signal neutral = SignalEncoder.decodeNeutralRobot(s);
+				knownNeutralRobots.add(neutral.getLocation());
+				break;
+			case NEW_ROBOT:
+				//Archon prob sending this out
+				break;
+			case OTHER:
+				//WTF
+				break;
+			case PANIC:
+				//TODO: Decide what to do
+				break;
+			case PANIC_OVER:
+				break;
+			case PARTS_CACHE:
+				Signal parts = SignalEncoder.decodeParts(s);
+				knownParts.add(parts.getLocation());
+				break;
+			default:
+				break;
+			}
+		}
+		
+		
 		if (!rc.isCoreReady()) {
 			turns--;
 			return;

@@ -27,6 +27,13 @@ public class Statics {
 				hi[i++] = o; 
 		return hi;
 	}
+	
+	public static boolean contains(Object obj, Object[] arr){
+		for (Object i : arr)
+			if (i.equals(obj))
+				return true;
+		return false;
+	}
 
 	public static boolean runAway(RobotController rc, RobotInfo[] friends, RobotInfo[] enemies)
 			throws GameActionException {
