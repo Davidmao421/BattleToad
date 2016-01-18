@@ -68,7 +68,6 @@ public class ArchonBrain implements Brain {
 		turns = 0;
 		buildScout();
 		current = Routine.TURRET_CLUSTER;
-		Statics.referenceLocation = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 	}
 
 	private void buildTurretCluster() throws GameActionException {
@@ -78,16 +77,6 @@ public class ArchonBrain implements Brain {
 		case 3:
 			buildRobot(RobotType.SOLDIER);
 			break;
-		/*case 4:
-			buildRobot(RobotType.TURRET);
-			RobotInfo[] robots = rc.senseNearbyRobots();
-			for (RobotInfo r : robots)
-				if (r.team == rc.getTeam() && r.type == RobotType.TURRET
-						&& r.location.distanceSquaredTo(rc.getLocation()) == 1) {
-					Signal s = SignalEncoder.encodeRobot(r.type, r.ID, r.location);
-					rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], BROADCAST_RANGE);
-				}
-			break;*/
 		default:
 			setRoutine(Routine.NONE);
 			turns = 0;
@@ -96,8 +85,8 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenge() throws GameActionException {
-		MapLocation[] potential =  rc.sensePartLocations(BROADCAST_RANGE);
-		RobotInfo[] neutrals = rc.senseNearbyRobots(BROADCAST_RANGE, Team.NEUTRAL);
+		MapLocation[] potential =  rc.sensePartLocations(-1);
+		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
 		
 		if(neutrals.length!=0) {
 			MapLocation[] locs = new MapLocation[neutrals.length];
@@ -110,7 +99,7 @@ public class ArchonBrain implements Brain {
 					return;
 				}
 				i++;
-			}
+			} //reaches here if cannot activate
 			_moveDirection = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
 			if(rc.isCoreReady())
 				moveTowards(_moveDirection);
@@ -133,7 +122,7 @@ public class ArchonBrain implements Brain {
 	
 	Direction _moveDirection;
 	private void randomlyMove() throws GameActionException{
-		if (turns > 5){
+		if (turns > 8){
 			rc.broadcastSignal(BROADCAST_RANGE);
 			_moveDirection = null;
 			turns = 0;
@@ -144,7 +133,7 @@ public class ArchonBrain implements Brain {
 		int allies = 0;
 		int enemies = 0;
 		for(RobotInfo r:nearby) {
-			if(r.team.equals(rc.getTeam())) {
+			if(r.team==rc.getTeam()) {
 				allies++;
 			} else {
 				enemies++;
@@ -152,6 +141,7 @@ public class ArchonBrain implements Brain {
 		}
 		
 		if(enemies>allies) {//run away
+			turns--;
 			MapLocation away = rc.getLocation().add(Statics.directions[0]);
 			for(RobotInfo r:nearby) {
 				if(!r.team.equals(rc.getTeam())) {

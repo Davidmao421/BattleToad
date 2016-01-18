@@ -17,6 +17,17 @@ public class Statics {
 	public static MapLocation referenceLocation;
 	
 	public static int maxCord = 80;
+	
+	public static boolean runAway(RobotController rc, RobotInfo[] friends, RobotInfo[] enemies) throws GameActionException{
+		if (friends.length > enemies.length)
+			return false;
+		
+		MapLocation enemyCom = com(enemies);
+		Direction d = enemyCom.directionTo(rc.getLocation());
+		moveTo(d, rc);
+		return true;
+	}
+	
 
 	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){
 		if (info.length == 0) return null;
@@ -41,6 +52,17 @@ public class Statics {
 		for (MapLocation l : locs){
 			x += l.x;
 			y += l.y;
+		}
+		y/=Math.max(1, locs.length);
+		x/=Math.max(1, locs.length);
+		return new MapLocation(x,y);
+	}
+	
+	public static MapLocation com(RobotInfo[] locs){
+		int x,y=x=0; 
+		for (RobotInfo i : locs){
+			x += i.location.x;
+			y += i.location.y;
 		}
 		y/=Math.max(1, locs.length);
 		x/=Math.max(1, locs.length);
