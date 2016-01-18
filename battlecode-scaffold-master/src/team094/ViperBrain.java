@@ -10,14 +10,15 @@ import battlecode.common.Team;
 
 public class ViperBrain implements Brain {
 
-	public MapLocation enemyCom, teamCom;
-
-	public void initialize(RobotController rc) {
+	public static MapLocation enemyCom, teamCom;
+	public static RobotController rc;
+	
+	public void initialize() {
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 	}
 
-	public void attack(RobotController rc, RobotInfo enemy) throws GameActionException {
+	public void attack(RobotInfo enemy) throws GameActionException {
 
 		if (rc.canAttackLocation(enemy.location) && rc.isCoreReady() && rc.isWeaponReady()) {
 			rc.attackLocation(enemy.location);
@@ -30,6 +31,31 @@ public class ViperBrain implements Brain {
 		}
 	}
 
+	public static RobotInfo viperCompare(RobotInfo[] enemies) {
+		boolean hasFound = false;
+		RobotInfo start=null;
+		int i = 0;
+		while(hasFound==false&&i<enemies.length) {
+			if(enemyCom.distanceSquaredTo(enemies[i].location) < enemies[i].location.distanceSquaredTo(teamCom)) {
+				hasFound=true;
+				start=enemies[i];
+			}
+			else
+				i++;
+		}
+		if(start!=null) {
+			for(RobotInfo r: enemies) {
+				if(!CompareStuff.isInfected(r)&&r.location.distanceSquaredTo(rc.getLocation())<start.location.distanceSquaredTo(rc.getLocation())&&enemyCom.distanceSquaredTo(start.location) < start.location.distanceSquaredTo(teamCom)) {
+					start=r;
+				}
+					
+			}
+			return start;
+		}
+		else
+			return null;
+	}
+	
 	/*
 	 * public void pussy(RobotController rc, RobotInfo[] enemies){ RobotInfo
 	 * away = CompareStuff.moveAwayFrom(enemies, rc.getLocation()); if (away !=
@@ -38,32 +64,44 @@ public class ViperBrain implements Brain {
 	 * Statics.moveTo(CompareStuff.moveAwayFrom(enemies,
 	 * rc.getLocation()).location .directionTo(rc.getLocation()), rc); } }
 	 */
-	public void runTurn(RobotController rc) throws GameActionException {
+	public void runTurn() throws GameActionException {
+		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
 		RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-		RobotInfo closestEnemy = Statics.closestRobot(enemyCom, robots);
-
-		if (closestEnemy != null) {
-			if (enemyCom.distanceSquaredTo(closestEnemy.location) < closestEnemy.location.distanceSquaredTo(teamCom)) {
-				attack(rc, closestEnemy);
+		RobotInfo away = CompareStuff.moveAwayFrom(zombies, rc.getLocation());
+		RobotInfo away2 = CompareStuff.moveAwayFrom(robots, rc.getLocation());
+		if (away != null) {
+			if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
+				Statics.moveTo(away.location.directionTo(rc.getLocation()), rc); // TODO:
+		}
+		else if (away2 != null) {
+			if (rc.isCoreReady() && rc.canMove(away2.location.directionTo(rc.getLocation())))
+				Statics.moveTo(away2.location.directionTo(rc.getLocation()), rc); // TODO:
+		}
+		else {
+			RobotInfo bestEnemy = null;
+			if(robots != null)
+				bestEnemy = viperCompare(robots);
+			RobotInfo bestZombie = null;
+			if(zombies != null)
+				bestZombie = viperCompare(zombies);
+			if (bestEnemy != null) {
+				attack(bestEnemy);
 				return;
 			}
-
-			robots = rc.senseNearbyRobots(-1, Team.ZOMBIE);
-			closestEnemy = Statics.closestRobot(enemyCom, robots);
-
-			if (Statics.sqrDist(enemyCom, closestEnemy.location) > Statics.sqrDist(closestEnemy.location, teamCom)) {
-				attack(rc, closestEnemy);
+			else if(bestZombie != null) {
+				attack(bestZombie);
 				return;
+			} else {
+				if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
+					rc.move(rc.getLocation().directionTo(enemyCom));
 			}
-		} else {
-			if (rc.canMove(rc.getLocation().directionTo(enemyCom)))
-				rc.move(rc.getLocation().directionTo(enemyCom));
 		}
 	}
 
-	public void run(RobotController rc) {
+	public void run(RobotController rc1) {
+		rc=rc1;
 		try {
-			initialize(rc);
+			initialize();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -73,7 +111,7 @@ public class ViperBrain implements Brain {
 			if (!rc.isCoreReady())
 				continue;
 			try {
-				runTurn(rc);
+				runTurn();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
