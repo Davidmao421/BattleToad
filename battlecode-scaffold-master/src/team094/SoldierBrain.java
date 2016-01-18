@@ -190,6 +190,7 @@ public class SoldierBrain implements Brain {
 					priority = 2;
 				Signal e = SignalEncoder.decodeAttackEnemy(s);
 				target = e.getLocation();
+				System.out.println("Target received");
 				break;
 			case CHANGE_SCHEME:
 				// TODO:
