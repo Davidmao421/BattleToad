@@ -70,6 +70,7 @@
       <initial-robot originOffsetX="2" originOffsetY="25" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="2" originOffsetY="26" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="2" originOffsetY="28" type="SCOUT" team="A"/>
+      <initial-robot originOffsetX="3" originOffsetY="6" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="3" originOffsetY="21" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="3" originOffsetY="22" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="3" originOffsetY="29" type="SCOUT" team="A"/>
@@ -78,20 +79,32 @@
       <initial-robot originOffsetX="5" originOffsetY="21" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="6" originOffsetY="19" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="6" originOffsetY="28" type="SCOUT" team="A"/>
+      <initial-robot originOffsetX="8" originOffsetY="6" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="8" originOffsetY="25" type="SCOUT" team="A"/>
       <initial-robot originOffsetX="10" originOffsetY="12" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="10" originOffsetY="13" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="10" originOffsetY="14" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="11" originOffsetY="11" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="11" originOffsetY="12" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="12" originOffsetY="6" type="SOLDIER" team="B"/>
+      <initial-robot originOffsetX="12" originOffsetY="23" type="SOLDIER" team="A"/>
+      <initial-robot originOffsetX="13" originOffsetY="16" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="16" originOffsetY="9" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="17" originOffsetY="6" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="17" originOffsetY="9" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="18" originOffsetY="15" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="18" originOffsetY="25" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="20" originOffsetY="3" type="SOLDIER" team="B"/>
+      <initial-robot originOffsetX="22" originOffsetY="7" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="22" originOffsetY="16" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="24" originOffsetY="9" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="24" originOffsetY="12" type="SOLDIER" team="B"/>
       <initial-robot originOffsetX="25" originOffsetY="9" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="26" originOffsetY="2" type="SOLDIER" team="B"/>
+      <initial-robot originOffsetX="26" originOffsetY="23" type="SOLDIER" team="A"/>
       <initial-robot originOffsetX="27" originOffsetY="13" type="ZOMBIEDEN" team="A"/>
       <initial-robot originOffsetX="27" originOffsetY="14" type="ZOMBIEDEN" team="A"/>
+      <initial-robot originOffsetX="29" originOffsetY="5" type="SOLDIER" team="B"/>
     </initialRobots>
   </game-map>
 </object-stream>
