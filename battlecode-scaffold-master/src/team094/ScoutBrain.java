@@ -38,12 +38,13 @@ public class ScoutBrain implements Brain {
 			if (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
 					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
 				radiate = false;
+				return;
 			}
 		}
 		if (radiate == true) {
 			if (rc.canMove(d))
-				rc.move(d);
-			else{
+				Statics.moveTo(d, rc);
+			else {
 				radiate = false;
 			}
 		}
@@ -53,8 +54,8 @@ public class ScoutBrain implements Brain {
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		MapLocation[] parts = rc.sensePartLocations(-1);
 
-		rc.setIndicatorString(1, "Nearby Robots: " + robots.length);
-		rc.setIndicatorString(2, "Nearby parts: " + parts.length);
+		// rc.setIndicatorString(1, "Nearby Robots: " + robots.length);
+		// rc.setIndicatorString(2, "Nearby parts: " + parts.length);
 
 		for (MapLocation part : parts) {
 			if (!broadcastQueue.contains(SignalEncoder.encodeParts(part, rc.senseParts(part)))) {
@@ -82,9 +83,10 @@ public class ScoutBrain implements Brain {
 		senseBroadcast();
 		if (broadcast())
 			return;
-		if (radiate = true) {
+		rc.setIndicatorString(0, "Radiate: " + radiate);
+		if (radiate == true) {
 			radiate(); // TODO: working movement
-		} else {
+		} else if (radiate == false) {
 			move();
 		}
 
@@ -95,33 +97,38 @@ public class ScoutBrain implements Brain {
 		Direction d = teamCom.directionTo(rc.getLocation());
 		Direction[] directions = Statics.directions;
 		MapLocation currentLoc = rc.getLocation();
-		MapLocation bigThreat = null ;
+		MapLocation bigThreat = null;
 		double damage = 0;
-		for (RobotInfo r : robots) {
-			if (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
-				if (bigThreat == null) {
-					bigThreat = r.location;
-					damage = r.type.attackPower;
-				} else {
-					if (damage < r.type.attackPower) {
+		if (robots.length != 0) {
+			for (RobotInfo r : robots) {
+				if (currentLoc.distanceSquaredTo(r.location) <= Math.pow((Math.sqrt(r.type.attackRadiusSquared) + 1),2)) {
+					if (bigThreat == null) {
 						bigThreat = r.location;
 						damage = r.type.attackPower;
+					} else {
+						if (damage < r.type.attackPower) {
+							bigThreat = r.location;
+							damage = r.type.attackPower;
+						}
 					}
 				}
 			}
 		}
-		if (!(bigThreat == null)) {
+		if ((bigThreat != null)) {
 			Statics.moveTo(bigThreat.directionTo(rc.getLocation()), rc);
-		}
-		else {
-			for (Direction dir: directions) {
+		} else {
+			int k =(int)(Math.random()*8);
+			for (int i = 0; i < 8; i++) {
+				Direction dir = directions[(i + k)%8];
 				boolean shouldMove = true;
 				for (RobotInfo r : robots) {
-					if (currentLoc.add(dir).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
+					if (currentLoc.add(dir).distanceSquaredTo(r.location) <= Math
+							.pow((Math.sqrt(r.type.attackRadiusSquared) + 1), 2)) {
 						shouldMove = false;
 					}
-					if (shouldMove == true && rc.canMove(dir) && rc.isCoreReady()){
+					if (shouldMove == true && rc.canMove(dir) && rc.isCoreReady()) {
 						rc.move(dir);
+						return;
 					}
 				}
 			}
@@ -133,8 +140,9 @@ public class ScoutBrain implements Brain {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
 			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
-			rc.setIndicatorString(0, "Broadcast queue: " + broadcastQueue.size());
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO: Figure out a good broadcast range
+			// rc.setIndicatorString(0, "Broadcast queue: " +
+			// broadcastQueue.size());
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600);
 			sentSignals.add(s);
 			broadcast();
 			return true;
