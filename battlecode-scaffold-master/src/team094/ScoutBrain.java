@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-
 import battlecode.common.*;
 
 public class ScoutBrain implements Brain {
@@ -14,17 +13,18 @@ public class ScoutBrain implements Brain {
 	// Queue<Signal> broadcastQueue;
 	Queue<Signal> broadcastQueue;
 	Set<Signal> sentSignals;
-	
+
 	RobotController rc;
+
 	public void initialize() {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
 		sentSignals = new HashSet<>();
 	}
-	
-	public void addBroadcast(Signal s){
-		if (sentSignals.contains(s))
+
+	public void addBroadcast(Signal s) {
+		if (sentSignals.contains(s) || broadcastQueue.contains(s))
 			return;
 		broadcastQueue.add(s);
 	}
@@ -52,26 +52,36 @@ public class ScoutBrain implements Brain {
 					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
 				//addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location, rc.getLocation()));
 			}
-			if (info.team.equals(Team.NEUTRAL)) {
-				//addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location, rc.getLocation()));
-			}
+
+			if (info.team == Team.NEUTRAL) {
+				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
+}
 		}
 
 	}
 
 	public void runTurn() throws GameActionException {
+		rc.setIndicatorString(1, "Queue length: " + broadcastQueue.size());
+
 		senseBroadcast();
-		broadcast();
+
+		if (broadcast())
+			return;
 		radiate(); // TODO: working movement
 	}
 
-	public void broadcast() throws GameActionException {
+	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
-			Signal s = broadcastQueue.poll();
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); //TODO: figure out a good actual broadcast range
+			Signal s = broadcastQueue.remove();
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO: Figure out a good broadcast range
+																					
 			sentSignals.add(s);
 			broadcast();
+			
+			return true;
 		}
+		
+		return false;
 	}
 
 	public void run(RobotController rc1) {
@@ -84,7 +94,8 @@ public class ScoutBrain implements Brain {
 
 		while (true) {
 			Clock.yield();
-			if (!rc.isCoreReady()) continue;
+			if (!rc.isCoreReady())
+				continue;
 			try {
 				runTurn();
 			} catch (Exception e) {
@@ -93,7 +104,6 @@ public class ScoutBrain implements Brain {
 		}
 	}
 	/*
-	 * public void run(){ while (true)Clock.yield(); // what
-	 * the hell is this }
+	 * public void run(){ while (true)Clock.yield(); // what the hell is this }
 	 */
 }
