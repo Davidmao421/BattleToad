@@ -13,7 +13,7 @@ public class RobotPlayer {
 
 	public static void run(RobotController rc) {
 		Statics.referenceLocation = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
-		
+
 		switch (rc.getType()) {
 		case ARCHON:
 			brain = new ArchonBrain();
@@ -26,25 +26,24 @@ public class RobotPlayer {
 		case GUARD:
 			brain = new SoldierBrain();
 			break;
-		
+
 		case SCOUT:
 			brain = new ScoutBrain();
 			break;
-		
+
 		case VIPER:
 			brain = new ViperBrain();
 			break;
-			
+		case TTM:
 		case TURRET:
 			brain = new TurretBrain();
 			break;
-			
-			
+
 		default:
 			break;
 		}
 
 		brain.run(rc);
 	}
-	
+
 }

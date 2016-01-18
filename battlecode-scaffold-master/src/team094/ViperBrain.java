@@ -1,10 +1,8 @@
 package team094;
 
-import java.util.ArrayList;
 
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
