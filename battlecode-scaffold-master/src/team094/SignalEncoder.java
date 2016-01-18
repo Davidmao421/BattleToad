@@ -1,5 +1,7 @@
 package team094;
 
+import battlecode.common.GameActionException;
+import battlecode.common.GameActionExceptionType;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotType;
 import battlecode.common.Signal;
@@ -91,15 +93,17 @@ public class SignalEncoder {
 		return new Signal(s.getLocation(), s.getID(), s.getTeam(), part1, part2);
 
 	}
+
 	public static Signal decodeEcho(Signal e) {
 		MapLocation l = new MapLocation((0x0e000000 & e.getMessage()[0]) >> 21, (0x001fc000 & e.getMessage()[0]) >> 14);
 		int i = ((e.getMessage()[0] & 0x00003fff) << 1) + ((e.getMessage()[1] & 0x80000000) >> 31);
 		return new Signal(l, i, e.getTeam());
 	}
-	
+
 	public static Signal attackEnemy(RobotIdTypePair pair) {
 		return attackEnemy(pair.id, pair.loc);
 	}
+
 	public static Signal attackEnemy(int enemyID, MapLocation loc) {
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.ATTACK_ENEMY.header << 28;
@@ -109,6 +113,7 @@ public class SignalEncoder {
 		part2 = loc.y << 31;
 		return new Signal(loc, enemyID, Team.NEUTRAL, part1, part2);
 	}
+
 	public static RobotIdTypePair decodeAttackEnemy(Signal s) {
 		int id = (s.getMessage()[0] & 0x0fffffff) >> 13;
 		int x = (s.getMessage()[0] & 0x000000ff) >> 6;
@@ -117,13 +122,78 @@ public class SignalEncoder {
 		return new RobotIdTypePair(id, null, new MapLocation(x, y));
 	}
 
-	
-	
-	
-	
-	
-	
-	
+	public static Signal encodePanic(MapLocation... locs) throws GameActionException {
+		int part1, part2 = part1 = 0;
+		MapLocation loc;
+		int x, y;
+		switch (locs.length) {
+		case 3:
+			loc = new MapLocation(locs[2].x - Statics.referenceLocation.x, locs[2].y - Statics.referenceLocation.y);
+			x = (loc.x >> 24) + (0x000000ff & loc.x);
+			y = (loc.y >> 24) + (0x000000ff & loc.y);
+			part1 |= x << 2;
+			part1 |= y >> 6;
+			part2 |= y << 26;
+		case 2:
+			loc = new MapLocation(locs[1].x - Statics.referenceLocation.x, locs[1].y - Statics.referenceLocation.y);
+			x = (loc.x >> 24) + (0x000000ff & loc.x);
+			y = (loc.y >> 24) + (0x000000ff & loc.y);
+			part1 |= x << 2;
+			part1 |= y >> 6;
+			part2 |= y << 26;
+
+		case 1:
+			part1 |= PacketType.PANIC.header << 28;
+			part1 |= locs.length << 26;
+
+			loc = new MapLocation(locs[0].x - Statics.referenceLocation.x, locs[0].y - Statics.referenceLocation.y);
+			x = (loc.x >> 24) + (0x000000ff & loc.x);
+			y = (loc.y >> 24) + (0x000000ff & loc.y);
+			part1 |= x << 18;
+			part1 |= y << 10;
+			break;
+
+		default:
+			throw new GameActionException(GameActionExceptionType.CANT_DO_THAT, "You need panic locations idiot");
+		}
+
+		return null;
+	}
+
+	public static MapLocation[] decodePanic(Signal s) throws GameActionException {
+		int length = (0x0c000000 & s.getMessage()[0]) << 26;
+		MapLocation[] locs = new MapLocation[length];
+		int x, y = x = 0;
+		switch (length) {
+		case 3:
+			x = ((0x02000000 & s.getMessage()[1]) << 6) | ((0x01fc0000 & s.getMessage()[1]) >> 18);
+			y = ((0x00020000 & s.getMessage()[1])  << 14) | ((0x0001fc00 & s.getMessage()[1]) << 10);
+			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y); 
+		case 2:
+			x = ((0x00000200 & s.getMessage()[0]) << 22) | ((0x000001fc & s.getMessage()[0]) >> 2);
+			y = ((0x00000002 & s.getMessage()[0]) << 30) | ((0x00000001 & s.getMessage()[0]) << 6) | ((0xfc000000 & s.getMessage()[1]) >> 26);
+			locs[1] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y); 
+		case 1:
+			x = ((0x02000000 & s.getMessage()[0]) << 6) | ((0x01fc0000 & s.getMessage()[0]) >> 18);
+			y = ((0x00020000 & s.getMessage()[0]) << 14) | ((0x0001fc00 & s.getMessage()[0]) >> 10);
+			locs[0] = new MapLocation(x + Statics.referenceLocation.x, y + Statics.referenceLocation.y);
+			break;
+		default:
+			throw new GameActionException(GameActionExceptionType.CANT_DO_THAT,
+					"You can only have between [1-3] locations idiot");
+		}
+		return locs;
+	}
+
+	public static Signal encodePanicOver(int id) {
+		// TODO:
+		return null;
+	}
+
+	public static int decodePanicOver(Signal s) {
+		// TODO:
+		return -1;
+	}
 
 	public static Signal encodeParts(MapLocation mapLoc, double numParts) {
 		int part1, part2 = part1 = 0;
@@ -134,13 +204,13 @@ public class SignalEncoder {
 		part2 |= parts << 12;
 		return new Signal(new MapLocation(6, 9), 0, Team.ZOMBIE, part1, part2);
 	}
+
 	public static Signal decodeParts(Signal e) {
 		MapLocation l = new MapLocation(((0x0ff00000 & e.getMessage()[0])) >> 20,
 				(0x000ff000 & e.getMessage()[0]) >> 12);
 		int numParts = (0xfffff000 & e.getMessage()[1] >> 12);
 		return new Signal(l, numParts, e.getTeam());
 	}
-
 
 	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc) {
 		loc = new MapLocation(loc.x - Statics.referenceLocation.x, loc.y - Statics.referenceLocation.y);
@@ -172,6 +242,7 @@ public class SignalEncoder {
 	public static Signal encodeRobot(RobotIdTypePair pair) {
 		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
+
 	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
 		loc = new MapLocation(loc.x - Statics.referenceLocation.x, loc.y - Statics.referenceLocation.y);
 		int x = (loc.x >> 24) + (0x000000ff & loc.x);
@@ -187,6 +258,7 @@ public class SignalEncoder {
 
 		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL, part1, part2);
 	}
+
 	public static RobotIdTypePair decodeRobot(Signal e) {
 		int id = (e.getMessage()[0] & 0x00ffffff) >> 9;
 		RobotType type = robotIntToType((0xf000000 & e.getMessage()[0]) >> 24);
@@ -196,27 +268,6 @@ public class SignalEncoder {
 
 		return new RobotIdTypePair(id, type,
 				new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y));
-	}
-
-
-	public static Signal encodePanic(int id, MapLocation... locs) {
-		// TODO:
-		return null;
-	}
-
-	public static Panic decodePanic(Signal s) {
-		// TODO:
-		return null;
-	}
-
-	public static Signal encodePanicOver(int id) {
-		// TODO:
-		return null;
-	}
-
-	public static int decodePanicOver(Signal s) {
-		// TODO:
-		return -1;
 	}
 
 	public static Signal encodeDead(int id) {
