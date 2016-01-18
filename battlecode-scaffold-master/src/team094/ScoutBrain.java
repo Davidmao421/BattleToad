@@ -21,7 +21,7 @@ public class ScoutBrain implements Brain {
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
 		sentSignals = new HashSet<>();
-		
+
 	}
 
 	public void addBroadcast(Signal s) {
@@ -40,6 +40,9 @@ public class ScoutBrain implements Brain {
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		MapLocation[] parts = rc.sensePartLocations(-1);
 
+		rc.setIndicatorString(1, "Nearby Robots: " + robots.length);
+		rc.setIndicatorString(2, "Nearby parts: " + parts.length);
+		
 		for (MapLocation part : parts) {
 			if (!broadcastQueue.contains(SignalEncoder.encodeParts(part, rc.senseParts(part)))) {
 				addBroadcast(SignalEncoder.encodeParts(part, rc.senseParts(part)));
@@ -51,19 +54,18 @@ public class ScoutBrain implements Brain {
 				continue;
 			if (rc.getTeam().opponent() == info.team
 					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
-				//addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location, rc.getLocation()));
+				// addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID,
+				// info.location, rc.getLocation()));
 			}
 
 			if (info.team == Team.NEUTRAL) {
 				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
-}
+			}
 		}
 
 	}
 
 	public void runTurn() throws GameActionException {
-		rc.setIndicatorString(1, "Queue length: " + broadcastQueue.size());
-
 		senseBroadcast();
 
 		if (broadcast())
@@ -75,13 +77,13 @@ public class ScoutBrain implements Brain {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
 			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO: Figure out a good broadcast range
-																					
+			rc.setIndicatorString(0, "Broadcast queue: " + broadcastQueue.size());
 			sentSignals.add(s);
 			broadcast();
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
 
@@ -104,7 +106,5 @@ public class ScoutBrain implements Brain {
 			}
 		}
 	}
-	/*
-	 * public void run(){ while (true)Clock.yield(); // what the hell is this }
-	 */
+
 }
