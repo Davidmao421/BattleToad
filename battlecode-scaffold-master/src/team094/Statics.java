@@ -14,56 +14,56 @@ public class Statics {
 	public static MapLocation referenceLocation;
 
 	public static int maxCord = 80;
-	
-	public static MapLocation[] combineLocs(MapLocation[] ... arrs){
+
+	public static MapLocation[] combineLocs(MapLocation[]... arrs) {
 		int length = 0;
 		for (MapLocation[] arr : arrs)
 			length += arr.length;
 		int i = 0;
 		MapLocation[] all = new MapLocation[length];
 		for (MapLocation[] arr : arrs)
-			for(MapLocation loc : arr)
+			for (MapLocation loc : arr)
 				all[i++] = loc;
-		
+
 		return all;
 	}
-	
-	public static RobotInfo[] combineRobotInfo(RobotInfo[] ... arrs){
+
+	public static RobotInfo[] combineRobotInfo(RobotInfo[]... arrs) {
 		int length = 0;
 		for (RobotInfo[] arr : arrs)
 			length += arr.length;
 		int i = 0;
 		RobotInfo[] all = new RobotInfo[length];
 		for (RobotInfo[] arr : arrs)
-			for(RobotInfo loc : arr)
+			for (RobotInfo loc : arr)
 				all[i++] = loc;
-		
+
 		return all;
 	}
-	
-	@Deprecated 
-	public static Object[] combineArrays(Object[] ... arrs){
+
+	@Deprecated
+	public static Object[] combineArrays(Object[]... arrs) {
 		int length = 0;
-		for (Object[] arr : arrs){
-			length+=arr.length;
+		for (Object[] arr : arrs) {
+			length += arr.length;
 		}
-		System.out.println("length: = "+length);
+		System.out.println("length: = " + length);
 		Object[] hi = new Object[length];
 		int i = 0;
 		for (Object[] arr : arrs) {
 			for (Object o : arr) {
-				hi[i++] = o; 
+				hi[i++] = o;
 			}
 		}
-		System.out.println("final i: =" +i);
-		if (length == 0 && i==0) {
-			hi = new MapLocation[]{new MapLocation(0,0)};
-			System.out.println("test: "+hi);
+		System.out.println("final i: =" + i);
+		if (length == 0 && i == 0) {
+			hi = new MapLocation[] { new MapLocation(0, 0) };
+			System.out.println("test: " + hi);
 		}
 		return hi;
 	}
-	
-	public static boolean contains(Object obj, Object[] arr){
+
+	public static boolean contains(Object obj, Object[] arr) {
 		for (Object i : arr)
 			if (i.equals(obj))
 				return true;
@@ -98,9 +98,9 @@ public class Statics {
 		}
 		return closest;
 	}
-	
-	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){
-		return closestRobot(loc,info,0);
+
+	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info) {
+		return closestRobot(loc, info, 0);
 	}
 
 	public static int sqrDist(MapLocation loc1, MapLocation loc2) {
@@ -170,30 +170,22 @@ public class Statics {
 		return false;
 	}
 
-	protected static void moveTo(Direction direction, RobotController rc) throws GameActionException {
-		try {
-			if (rc.isCoreReady()) {
-				for (int i = 0; i < 2; i++) {
-					if (rc.canMove(direction) && rc.isCoreReady()) {
-						rc.move(direction);
-					}
-					if (Math.random() < 0.5) {
-						direction = direction.rotateLeft();
-					} else {
-						direction = direction.rotateRight();
-					}
-				}
-				if (rc.getType().canClearRubble()) {
-					// failed to move, look to clear rubble
-					MapLocation ahead = rc.getLocation().add(direction);
-					if ((rc.senseRubble(ahead) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) && rc.isCoreReady()) {
-						rc.clearRubble(direction);
-					}
-				}
+	public static boolean moveTo(Direction direction, RobotController rc) throws GameActionException {
+
+		if (!rc.isCoreReady())
+			return false;
+		for (Direction d : new Direction[] { direction, direction.rotateLeft(), direction.rotateRight() })
+			if (rc.canMove(d)) {
+				rc.move(d);
+				return true;
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+
+		if (rc.getType().canClearRubble()
+				&& rc.senseRubble(rc.getLocation().add(direction)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+			rc.clearRubble(direction);
+			return true;
 		}
+		return false;
 
 	}
 

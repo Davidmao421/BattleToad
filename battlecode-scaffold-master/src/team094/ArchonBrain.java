@@ -222,6 +222,7 @@ public class ArchonBrain implements Brain {
 	Direction _moveDirection;
 
 	private void randomlyMove() throws GameActionException {
+
 		if (turns > 4) {
 			_moveDirection = null;
 			turns = 0;
@@ -232,13 +233,13 @@ public class ArchonBrain implements Brain {
 		RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
 		RobotInfo[] zombies = rc.senseNearbyRobots(-1, Team.ZOMBIE);
 
-		Statics.runAway(rc, allies, Statics.combineRobotInfo(enemies,zombies));
+		if (Statics.runAway(rc, allies, Statics.combineRobotInfo(enemies,zombies))) return;
 
 		if (_moveDirection == null)
 			_moveDirection = Statics.directions[(int) (Math.random() * Statics.directions.length)];
 
 		if (rc.canMove(_moveDirection)) {
-			rc.move(_moveDirection);
+			Statics.moveTo(_moveDirection, rc);
 			return;
 		}
 
