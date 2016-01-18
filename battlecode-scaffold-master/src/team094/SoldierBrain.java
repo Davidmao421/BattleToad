@@ -81,12 +81,11 @@ public class SoldierBrain implements Brain {
 			} else if (shortestDistance >= 9) {
 				Statics.moveTo(dir.opposite(), rc);
 			} else {
-				for (int i = 0; i < 8; i++) {
-					if (rc.senseRubble(
-							rc.getLocation().add(Statics.directions[i])) > GameConstants.RUBBLE_SLOW_THRESH) {
-						rc.clearRubble(Statics.directions[i]);
-						return;
-					}
+				if (digTowardsParts(rc)) {
+					return;
+				}
+				if (digNearby(rc)) {
+					return;
 				}
 				boolean left = rc.canMove(dir.rotateLeft().rotateLeft());
 				boolean right = rc.canMove(dir.rotateRight().rotateRight());
@@ -128,6 +127,38 @@ public class SoldierBrain implements Brain {
 		}
 	}
 
+	private static boolean digNearby(RobotController rc) throws GameActionException {
+		int k = (int) (Math.random() * 8);
+		for (int i = 0; i < 8; i++) {
+			if (rc.senseRubble(
+					rc.getLocation().add(Statics.directions[(i + k) % 8])) > GameConstants.RUBBLE_SLOW_THRESH) {
+				rc.clearRubble(Statics.directions[i]);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean digTowardsParts(RobotController rc) throws GameActionException {
+		MapLocation[] parts = rc.sensePartLocations(-1);
+		if (parts.length != 0) { // are there parts
+			MapLocation loc = Statics.closestLoc(rc.getLocation(), parts);
+			if (rc.senseRubble(loc) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) { // obstructed
+				Direction dir = rc.getLocation().directionTo(loc);
+				for (int i : new int[] { 0, 1, -1 }) { // check 3 directions
+					Direction candidateDir = Statics.directions[(dir.ordinal() + 8 + i) % 8];
+					if (rc.senseRubble(rc.getLocation().add(candidateDir)) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+						rc.clearRubble(candidateDir);
+						return true;
+					}
+				}
+				Statics.moveTo(dir, rc);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static void processSignals(RobotController rc) throws GameActionException {
 		Signal[] received = rc.emptySignalQueue();
 
@@ -136,9 +167,8 @@ public class SoldierBrain implements Brain {
 			case ATTACK_ENEMY:
 				if (priority < 2)
 					priority = 2;
-					Signal e = SignalEncoder.decodeAttackEnemy(s);
-					target = e.getLocation();
-					break;
+				Signal e = SignalEncoder.decodeAttackEnemy(s);
+				target = e.getLocation();
 				break;
 			case CHANGE_SCHEME:
 				// TODO:
@@ -185,9 +215,9 @@ public class SoldierBrain implements Brain {
 
 	public static void runTurn(RobotController rc) throws GameActionException {
 		if (target != null && priority > 2) {
-			
+
 		}
-		if (!attack(rc) && rc.isCoreReady()){
+		if (!attack(rc) && rc.isCoreReady()) {
 			move(rc);
 		}
 

@@ -69,7 +69,7 @@ public class ArchonBrain implements Brain {
 
 	private void intialize() throws GameActionException {
 		turns = 0;
-		// buildScout();
+		buildScout();
 		lastLoc = rc.getLocation();
 		current = Routine.TURRET_CLUSTER;
 	}
