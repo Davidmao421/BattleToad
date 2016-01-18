@@ -1,8 +1,5 @@
 package team094;
 
-import java.awt.Robot;
-import java.util.List;
-
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -13,68 +10,85 @@ import battlecode.common.RobotInfo;
 public class Statics {
 
 	public static Direction[] directions = Direction.values();
-	
+
 	public static MapLocation referenceLocation;
-	
+
 	public static int maxCord = 80;
 	
-	public static boolean runAway(RobotController rc, RobotInfo[] friends, RobotInfo[] enemies) throws GameActionException{
+	public static Object[] combineArrays(Object[] ... arrs){
+		int length = 0;
+		for (Object[] arr : arrs){
+			length+=arr.length;
+		}
+		Object[] hi = new Object[length];
+		int i = 0;
+		for (Object[] arr : arrs)
+			for (Object o : arr)
+				hi[i++] = o; 
+		return hi;
+	}
+
+	public static boolean runAway(RobotController rc, RobotInfo[] friends, RobotInfo[] enemies)
+			throws GameActionException {
 		if (friends.length > enemies.length)
 			return false;
-		
+
 		MapLocation enemyCom = com(enemies);
 		Direction d = enemyCom.directionTo(rc.getLocation());
-		moveTo(d, rc);
+		if (rc.canMove(d) && rc.isCoreReady())
+			moveTo(d, rc);
+		else
+			return false;
 		return true;
 	}
-	
 
-	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info){
-		if (info.length == 0) return null;
+	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info) {
+		if (info.length == 0)
+			return null;
 		RobotInfo closest = info[0];
 		int closestDist = Integer.MAX_VALUE;
-		for (int i = 1; i < info.length; i++){
+		for (int i = 1; i < info.length; i++) {
 			int dist = sqrDist(loc, info[i].location);
-			if (dist < closestDist){
+			if (dist < closestDist) {
 				closestDist = dist;
 				closest = info[i];
 			}
 		}
 		return closest;
 	}
-	
-	public static int sqrDist(MapLocation loc1 , MapLocation loc2){
-		return (loc1.x-loc2.x)*(loc1.x-loc2.x) + (loc1.y-loc2.y)*(loc1.y-loc2.y);
+
+	public static int sqrDist(MapLocation loc1, MapLocation loc2) {
+		return (loc1.x - loc2.x) * (loc1.x - loc2.x) + (loc1.y - loc2.y) * (loc1.y - loc2.y);
 	}
-	
-	public static MapLocation com(MapLocation[] locs){
-		int x,y=x=0; 
-		for (MapLocation l : locs){
+
+	public static MapLocation com(MapLocation[] locs) {
+		int x, y = x = 0;
+		for (MapLocation l : locs) {
 			x += l.x;
 			y += l.y;
 		}
-		y/=Math.max(1, locs.length);
-		x/=Math.max(1, locs.length);
-		return new MapLocation(x,y);
+		y /= Math.max(1, locs.length);
+		x /= Math.max(1, locs.length);
+		return new MapLocation(x, y);
 	}
-	
-	public static MapLocation com(RobotInfo[] locs){
-		int x,y=x=0; 
-		for (RobotInfo i : locs){
+
+	public static MapLocation com(RobotInfo[] locs) {
+		int x, y = x = 0;
+		for (RobotInfo i : locs) {
 			x += i.location.x;
 			y += i.location.y;
 		}
-		y/=Math.max(1, locs.length);
-		x/=Math.max(1, locs.length);
-		return new MapLocation(x,y);
+		y /= Math.max(1, locs.length);
+		x /= Math.max(1, locs.length);
+		return new MapLocation(x, y);
 	}
-	
-	public static MapLocation closestLoc(MapLocation loc, MapLocation[] list){
-		MapLocation closest = null; 
+
+	public static MapLocation closestLoc(MapLocation loc, MapLocation[] list) {
+		MapLocation closest = null;
 		int dist = Integer.MAX_VALUE;
-		for (MapLocation l : list){
-			int td = sqrDist(loc,l);
-			if (td < dist){
+		for (MapLocation l : list) {
+			int td = sqrDist(loc, l);
+			if (td < dist) {
 				dist = td;
 				closest = l;
 			}
@@ -126,7 +140,7 @@ public class Statics {
 				if (rc.getType().canClearRubble()) {
 					// failed to move, look to clear rubble
 					MapLocation ahead = rc.getLocation().add(direction);
-					if ((rc.senseRubble(ahead) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH)&& rc.isCoreReady()) {
+					if ((rc.senseRubble(ahead) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) && rc.isCoreReady()) {
 						rc.clearRubble(direction);
 					}
 				}

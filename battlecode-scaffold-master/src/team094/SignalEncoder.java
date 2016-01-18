@@ -1,6 +1,5 @@
 package team094;
 
-
 import battlecode.common.MapLocation;
 import battlecode.common.RobotType;
 import battlecode.common.Signal;
@@ -52,20 +51,34 @@ public class SignalEncoder {
 			return null;
 		}
 	}
-	public static Signal encodeParts(MapLocation mapLoc, double numParts){
-		int part1, part2 = part1 = 0;
-		int parts = (int) numParts;
-		part1 = PacketType.PARTS_CACHE.header << 28;
-		part1 |= mapLoc.x << 20;
-		part1 |= mapLoc.y << 12;
-		part2 |= parts << 12;
-		return new Signal (new MapLocation(6,9),0,Team.ZOMBIE, part1, part2);
+
+	public static PacketType getPacketType(Signal s) {
+		switch ((s.getMessage()[0] & 0xf0000000) >> 24) {
+		case 0:
+			return PacketType.ECHO;
+		case 1:
+			return PacketType.NEW_ROBOT;
+		case 2:
+			return PacketType.ATTACK_ENEMY;
+		case 3:
+			return PacketType.PANIC;
+		case 4:
+			return PacketType.PANIC_OVER;
+		case 5:
+			return PacketType.DEAD;
+		case 6:
+			return PacketType.CHANGE_SCHEME;
+		case 7:
+			return PacketType.LOCAL_ATTACK;
+		case 8:
+			return PacketType.PARTS_CACHE;
+		case 9:
+			return PacketType.NEUTRAL_ROBOT;
+		default:
+			return PacketType.OTHER;
+		}
 	}
-	public static Signal decodeParts(Signal e){
-		MapLocation l = new MapLocation(((0x0ff00000 & e.getMessage()[0])) >> 20, (0x000ff000 & e.getMessage()[0]) >> 12);
-		int numParts = (0xfffff000 & e.getMessage()[1] >> 12);
-		return new Signal(l,numParts, e.getTeam());
-	}
+
 	public static Signal encodeEcho(Signal s) {
 
 		int part1, part2 = part1 = 0;
@@ -83,70 +96,87 @@ public class SignalEncoder {
 		int i = ((e.getMessage()[0] & 0x00003fff) << 1) + ((e.getMessage()[1] & 0x80000000) >> 31);
 		return new Signal(l, i, e.getTeam());
 	}
-
-	public static PacketType getPacketType(Signal s) {
-		switch ((s.getMessage()[0] & 0xf0000000) >> 24) {
-		case 0:
-			return PacketType.ECHO;
-		case 1:
-			return PacketType.NEW_ROBOT;
-		case 2:
-			return PacketType.ATTACK_ENEMY;
-		case 3:
-			return PacketType.PANIC;
-		case 4: 
-			return PacketType.PANIC_OVER;
-		case 5:
-			return PacketType.DEAD;
-		case 6:
-			return PacketType.CHANGE_SCHEME;
-		case 7:
-			return PacketType.LOCAL_ATTACK;
-		case 8:
-			return PacketType.PARTS_CACHE;
-		case 9:
-			return PacketType.NEUTRAL_ROBOT;
-		default:
-			return PacketType.OTHER;
-		}
-	}
 	
-	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc){
-		loc = new MapLocation(loc.x-Statics.referenceLocation.x,loc.y-Statics.referenceLocation.y);
+	public static Signal attackEnemy(RobotIdTypePair pair) {
+		return attackEnemy(pair.id, pair.loc);
+	}
+	public static Signal attackEnemy(int enemyID, MapLocation loc) {
+		int part1, part2 = part1 = 0;
+		part1 = PacketType.ATTACK_ENEMY.header << 28;
+		part1 |= enemyID << 13;
+		part1 |= loc.x << 6;
+		part1 |= loc.y >> 1;
+		part2 = loc.y << 31;
+		return new Signal(loc, enemyID, Team.NEUTRAL, part1, part2);
+	}
+	public static RobotIdTypePair decodeAttackEnemy(Signal s) {
+		int id = (s.getMessage()[0] & 0x0fffffff) >> 13;
+		int x = (s.getMessage()[0] & 0x000000ff) >> 6;
+		int y = (s.getMessage()[0] & 0x0000003f) << 1;
+		y += s.getMessage()[1] >> 31;
+		return new RobotIdTypePair(id, null, new MapLocation(x, y));
+	}
+
+	
+	
+	
+	
+	
+	
+	
+
+	public static Signal encodeParts(MapLocation mapLoc, double numParts) {
+		int part1, part2 = part1 = 0;
+		int parts = (int) numParts;
+		part1 = PacketType.PARTS_CACHE.header << 28;
+		part1 |= mapLoc.x << 20;
+		part1 |= mapLoc.y << 12;
+		part2 |= parts << 12;
+		return new Signal(new MapLocation(6, 9), 0, Team.ZOMBIE, part1, part2);
+	}
+	public static Signal decodeParts(Signal e) {
+		MapLocation l = new MapLocation(((0x0ff00000 & e.getMessage()[0])) >> 20,
+				(0x000ff000 & e.getMessage()[0]) >> 12);
+		int numParts = (0xfffff000 & e.getMessage()[1] >> 12);
+		return new Signal(l, numParts, e.getTeam());
+	}
+
+
+	public static Signal encodeNeutralRobot(RobotType type, int id, MapLocation loc) {
+		loc = new MapLocation(loc.x - Statics.referenceLocation.x, loc.y - Statics.referenceLocation.y);
 		int x = (loc.x >> 24) + (0x000000ff & loc.x);
 		int y = (loc.y >> 24) + (0x000000ff & loc.y);
 		int part1, part2 = part1 = 0;
-		part1 = PacketType.NEW_ROBOT.header << 28;
+		part1 = PacketType.NEUTRAL_ROBOT.header << 28;
 		part1 |= x << 20;
 		part1 |= y << 12;
 		part1 |= robotTypeToInt(type) << 8;
-		return new Signal(Statics.referenceLocation, 0, Team.NEUTRAL,part1, part2);
+		return new Signal(Statics.referenceLocation, 0, Team.NEUTRAL, part1, part2);
 	}
-	
+
 	/**
 	 * 
 	 * @param s
-	 * @return signal id represents the robot type 
-	 * i.e. SignalEncoder.intToRobotType(s.getId())
+	 * @return signal id represents the robot type i.e.
+	 *         SignalEncoder.intToRobotType(s.getId())
 	 */
-	public static Signal decodeNeutralRobot(Signal s){
-		int x = ((s.getMessage()[0]&0x08000000) << 4) ^ ((s.getMessage()[0] & 0x07f00000) >> 20);
-		int y = ((s.getMessage()[0]&0x00080000) << 12) ^ ((s.getMessage()[0] & 0x0007f000) >> 12);
+	public static Signal decodeNeutralRobot(Signal s) {
+		int x = ((s.getMessage()[0] & 0x08000000) << 4) ^ ((s.getMessage()[0] & 0x07f00000) >> 20);
+		int y = ((s.getMessage()[0] & 0x00080000) << 12) ^ ((s.getMessage()[0] & 0x0007f000) >> 12);
 
-		MapLocation l = new MapLocation(Statics.referenceLocation.x+ x, Statics.referenceLocation.y+y);
+		MapLocation l = new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y + y);
 		int robotType = (0x000000f0 & s.getMessage()[0] >> 8);
-		return new Signal (l, robotType, Team.NEUTRAL);
+		return new Signal(l, robotType, Team.NEUTRAL);
 	}
 
-	public static Signal encodeRobot(RobotIdTypePair pair){
+	public static Signal encodeRobot(RobotIdTypePair pair) {
 		return encodeRobot(pair.type, pair.id, pair.loc);
 	}
-
 	public static Signal encodeRobot(RobotType type, int id, MapLocation loc) {
-		loc = new MapLocation(loc.x-Statics.referenceLocation.x,loc.y-Statics.referenceLocation.y);
+		loc = new MapLocation(loc.x - Statics.referenceLocation.x, loc.y - Statics.referenceLocation.y);
 		int x = (loc.x >> 24) + (0x000000ff & loc.x);
-		int y = (loc.y >> 24) + (0x000000ff & loc.y); 
-		
+		int y = (loc.y >> 24) + (0x000000ff & loc.y);
+
 		int part1, part2 = part1 = 0;
 		part1 = PacketType.NEW_ROBOT.header << 28;
 		part1 |= robotTypeToInt(type) << 24;
@@ -154,80 +184,58 @@ public class SignalEncoder {
 		part1 |= x << 1;
 		part1 |= y >> 77;
 		part2 |= (y & 0x00000003) << 25;
-	
-		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL,part1, part2);
+
+		return new Signal(new MapLocation(0, 0), 0, Team.NEUTRAL, part1, part2);
 	}
-	
-	public static RobotIdTypePair decodeRobot(Signal e){
-		int id = (e.getMessage()[0]&0x00ffffff)>>9;
-		RobotType type = robotIntToType((0xf000000&e.getMessage()[0])>>24);
-		
-		int x = ((e.getMessage()[0]&0x00000100) << 23) ^ ((e.getMessage()[0] & 0x07f000fe) >> 1);
-		int y = ((e.getMessage()[0]&0x00000000) << 31) ^ ((e.getMessage()[1] & 0x0007f000) >> 25);
-		
-		
-		return new RobotIdTypePair(id, type, new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y));
+	public static RobotIdTypePair decodeRobot(Signal e) {
+		int id = (e.getMessage()[0] & 0x00ffffff) >> 9;
+		RobotType type = robotIntToType((0xf000000 & e.getMessage()[0]) >> 24);
+
+		int x = ((e.getMessage()[0] & 0x00000100) << 23) ^ ((e.getMessage()[0] & 0x07f000fe) >> 1);
+		int y = ((e.getMessage()[0] & 0x00000000) << 31) ^ ((e.getMessage()[1] & 0x0007f000) >> 25);
+
+		return new RobotIdTypePair(id, type,
+				new MapLocation(Statics.referenceLocation.x + x, Statics.referenceLocation.y));
 	}
-	
-	public static Signal attackEnemy(RobotIdTypePair pair){
-		return attackEnemy(pair.id,pair.loc);
-	}
-	
-	public static Signal attackEnemy(int enemyID, MapLocation loc){
-		int part1, part2 = part1 = 0;
-		part1 = PacketType.ATTACK_ENEMY.header << 28;
-		part1 |=  enemyID << 13;
-		part1 |= loc.x << 6;
-		part1 |= loc.y >> 1;
-		part2 = loc.y << 31;
-		return new Signal(loc,enemyID,Team.NEUTRAL,part1,part2);
-	}
-	
-	public static RobotIdTypePair decodeEnemy(Signal s){
-		int id = (s.getMessage()[0]&0x0fffffff) >> 13;
-		int x = (s.getMessage()[0]&0x000000ff) >> 6;
-		int y = (s.getMessage()[0]&0x0000003f) << 1;
-		y+= s.getMessage()[1]>>31;
-		return new RobotIdTypePair(id, null, new MapLocation(x, y));
-	}
-	
-	public static Signal encodePanic(int id, MapLocation... locs){
-		//TODO: 
-		return null;
-	}
-	
-	public static Panic decodePanic(Signal s){
-		//TODO:
+
+
+	public static Signal encodePanic(int id, MapLocation... locs) {
+		// TODO:
 		return null;
 	}
 
-	public static Signal encodePanicOver(int id){
-		//TODO: 
+	public static Panic decodePanic(Signal s) {
+		// TODO:
 		return null;
 	}
-	
-	public static int decodePanicOver(Signal s){
-		//TODO:
+
+	public static Signal encodePanicOver(int id) {
+		// TODO:
+		return null;
+	}
+
+	public static int decodePanicOver(Signal s) {
+		// TODO:
 		return -1;
 	}
-	
-	public static Signal encodeDead(int id){
-		//TODO: 
+
+	public static Signal encodeDead(int id) {
+		// TODO:
 		return null;
 	}
-	
-	public static int decodeDead(Signal s){
-		//TODO:
+
+	public static int decodeDead(Signal s) {
+		// TODO:
 		return -1;
 	}
-	
-	public static Signal encodeChangeScheme(Scheme s){
-		//TODO: 
+
+	public static Signal encodeChangeScheme(Scheme s) {
+		// TODO:
 		return null;
 	}
-	
-	public static Scheme decodeChangeScheme(Signal s){
-		//TODO:
+
+	public static Scheme decodeChangeScheme(Signal s) {
+		// TODO:
 		return null;
 	}
 }
