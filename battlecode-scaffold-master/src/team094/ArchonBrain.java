@@ -118,7 +118,7 @@ public class ArchonBrain implements Brain {
 		ArrayList<MapLocation> freeParts = new ArrayList<MapLocation>();
 		ArrayList<MapLocation> hardParts = new ArrayList<MapLocation>();
 		for (MapLocation l : parts) {
-			if (rc.senseRubble(l) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+			if (rc.senseRubble(l) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
 				freeParts.add(l);
 			} else {
 				hardParts.add(l);
@@ -128,7 +128,7 @@ public class ArchonBrain implements Brain {
 		if (freeParts.size() != 0) {
 			MapLocation[] array = new MapLocation[freeParts.size()];
 			int index = 0;
-			for(MapLocation l:array) {
+			for(MapLocation l:freeParts) {
 				array[index] = l;
 				index++;
 			}
@@ -137,7 +137,16 @@ public class ArchonBrain implements Brain {
 		}
 		// if hard parts
 		if (hardParts.size() != 0) {
-			turns--;
+			MapLocation[] array = new MapLocation[hardParts.size()];
+			int index = 0;
+			for(MapLocation l:hardParts) {
+				array[index] = l;
+				index++;
+			}
+			MapLocation loc = Statics.closestLoc(rc.getLocation(), array);
+			if (rc.getLocation().distanceSquaredTo(loc) > 7) {
+				moveTowards(rc.getLocation().directionTo(loc));
+			}
 		}
 	}
 
