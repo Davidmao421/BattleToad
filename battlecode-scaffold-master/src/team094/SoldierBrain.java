@@ -125,7 +125,7 @@ public class SoldierBrain implements Brain {
 		for (int i = 0; i < 8; i++) {
 			MapLocation loc = rc.getLocation().add(Statics.directions[(i + k) % 8]);
 			if (rc.senseRubble(loc) > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
-				rc.clearRubble(Statics.directions[i]);
+				rc.clearRubble(Statics.directions[(i+k)%8]);
 				return true;
 			}
 		}
