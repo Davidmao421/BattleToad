@@ -78,7 +78,7 @@ public class CompareStuff {
 	 */
 	public static RobotInfo viperCompare(RobotInfo[] enemies, boolean kill) {
 		if (enemies.length > 0) {
-			if (kill) { // prioritizes weakest zombie not infected to make quick
+			if (kill) { // prioritizes weakest robot not infected to make quick
 						// kill
 				RobotInfo minH = enemies[0];
 				for (RobotInfo r : enemies) {
@@ -86,7 +86,7 @@ public class CompareStuff {
 						minH = r;
 				}
 				return minH;
-			} else { // prioritizes strongest zombie not infected
+			} else { // prioritizes strongest robot not infected
 				RobotInfo maxH = enemies[0];
 				for (RobotInfo r : enemies) {
 					if (r.health > maxH.health && !isInfected(r))
@@ -103,20 +103,11 @@ public class CompareStuff {
 		double maxD = 0;
 		if (enemies != null) {
 			for (RobotInfo r : enemies) {
-				if (r.type.attackRadiusSquared > r.location.distanceSquaredTo(myLoc)
-						&& Math.sqrt(r.type.attackRadiusSquared)
-								- Math.sqrt(r.location.distanceSquaredTo(myLoc)) > maxD) // TODO:
-																							// possibly
-																							// allow
-																							// for
-																							// moving
-																							// away
-																							// from
-																							// non
-																							// zombies
+				if (r.type.attackRadiusSquared >= r.location.distanceSquaredTo(myLoc)
+						&& maxD<r.attackPower)
 				{
 					maxMove = r;
-					maxD = Math.sqrt(r.type.attackRadiusSquared) - Math.sqrt(r.location.distanceSquaredTo(myLoc));
+					maxD = r.attackPower; //Math.sqrt(r.type.attackRadiusSquared) - Math.sqrt(r.location.distanceSquaredTo(myLoc));
 				}
 			}
 			return maxMove;

@@ -79,7 +79,7 @@ public class SoldierBrain implements Brain {
 			if (shortestDistance < 4) {
 				Statics.moveTo(dir, rc);
 			} else if (shortestDistance >= 9) {
-				Statics.moveTo(dir.opposite(), rc);
+				boolean t = Statics.moveTo(dir.opposite(), rc);
 			} else {
 				if (digToWin(rc)) {
 					return;
@@ -190,6 +190,7 @@ public class SoldierBrain implements Brain {
 					priority = 2;
 				Signal e = SignalEncoder.decodeAttackEnemy(s);
 				target = e.getLocation();
+				System.out.println("Target received");
 				break;
 			case CHANGE_SCHEME:
 				// TODO:

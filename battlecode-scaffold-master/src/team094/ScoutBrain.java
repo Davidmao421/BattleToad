@@ -35,6 +35,7 @@ public class ScoutBrain implements Brain {
 				rotatesLeft = !rotatesLeft;
 			}
 		}
+		
 	}
 
 	public void addBroadcast(Signal s) {
@@ -45,16 +46,16 @@ public class ScoutBrain implements Brain {
 
 	public void radiate() throws GameActionException {
 		Direction d = teamCom.directionTo(enemyCom);
-		if (rotatesLeft)
-			d = d.rotateLeft();
-		if (rotatesRight)
-			d = d.rotateRight();
+//		if (rotatesLeft)
+//			d = d.rotateLeft();
+//		if (rotatesRight)
+//			d = d.rotateRight();
 
 		MapLocation currentLoc = rc.getLocation();
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		for (RobotInfo r : robots) {
-			if (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
-					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
+			if ((r.team == rc.getTeam().opponent()) && (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
+					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared)) {
 				radiate = false;
 				return;
 			}
@@ -78,10 +79,8 @@ public class ScoutBrain implements Brain {
 		for (RobotInfo info : robots) {
 			if (info.team == rc.getTeam())
 				continue;
-			if (rc.getTeam().opponent() == info.team
-					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
-				// addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID,
-				// info.location, rc.getLocation()));
+			if (info.type == RobotType.ARCHON || info.type == RobotType.TURRET || info.type == RobotType.ZOMBIEDEN) {
+				 addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
 			}
 
 			if (info.team == Team.NEUTRAL) {
@@ -98,7 +97,8 @@ public class ScoutBrain implements Brain {
 		rc.setIndicatorString(0, "Radiate: " + radiate);
 		if (radiate) {
 			radiate(); // TODO: working movement
-		} else if (radiate == false) {
+		} 
+		if (!radiate) {
 			move();
 		}
 
