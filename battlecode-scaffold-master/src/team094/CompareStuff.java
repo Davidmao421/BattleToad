@@ -100,14 +100,14 @@ public class CompareStuff {
 
 	public static RobotInfo moveAwayFrom(RobotInfo[] enemies, MapLocation myLoc) {
 		RobotInfo maxMove = null;
-		double maxD = 0;
+		double maxD = -1;
 		if (enemies != null) {
 			for (RobotInfo r : enemies) {
-				if (r.type.attackRadiusSquared >= r.location.distanceSquaredTo(myLoc)
-						&& maxD<r.attackPower)
-				{
+				if (r.type.attackRadiusSquared >= r.location.distanceSquaredTo(myLoc) && maxD < r.attackPower) {
 					maxMove = r;
-					maxD = r.attackPower; //Math.sqrt(r.type.attackRadiusSquared) - Math.sqrt(r.location.distanceSquaredTo(myLoc));
+					maxD = r.attackPower; // Math.sqrt(r.type.attackRadiusSquared)
+											// -
+											// Math.sqrt(r.location.distanceSquaredTo(myLoc));
 				}
 			}
 			return maxMove;

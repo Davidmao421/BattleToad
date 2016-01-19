@@ -79,12 +79,16 @@ public class ScoutBrain implements Brain {
 		for (RobotInfo info : robots) {
 			if (info.team == rc.getTeam())
 				continue;
-			if (info.type == RobotType.ARCHON || info.type == RobotType.TURRET || info.type == RobotType.ZOMBIEDEN) {
-				 addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID, info.location));
+			if (info.type == RobotType.ARCHON || info.type == RobotType.TURRET || info.type == RobotType.ZOMBIEDEN || rc.getType().sensorRadiusSquared < info.type.attackRadiusSquared) {
+				Signal s = SignalEncoder.encodeAttackEnemy(info.ID, info.location);
+				
+				addBroadcast(s);
+			
 			}
 
 			if (info.team == Team.NEUTRAL) {
-				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
+				Signal s = SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location);
+				addBroadcast(s);
 			}
 		}
 
@@ -106,7 +110,6 @@ public class ScoutBrain implements Brain {
 
 	public void move() throws GameActionException {
 		RobotInfo[] robots = rc.senseNearbyRobots();
-		Direction d = teamCom.directionTo(rc.getLocation());
 		Direction[] directions = Statics.directions;
 		MapLocation currentLoc = rc.getLocation();
 		MapLocation bigThreat = null;
@@ -146,16 +149,15 @@ public class ScoutBrain implements Brain {
 				}
 			}
 		}
-
 	}
 
 	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
 			// rc.setIndicatorString(0, "Broadcast queue: " +
 			// broadcastQueue.size());
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600);
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 3600);
+			
 			sentSignals.add(s);
 			broadcast();
 			return true;

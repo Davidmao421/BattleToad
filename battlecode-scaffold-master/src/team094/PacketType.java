@@ -11,7 +11,7 @@ public enum PacketType {
 	   LOCAL_ATTACK(7),
 	   PARTS_CACHE(8),
 	   NEUTRAL_ROBOT(9),
-	    OTHER(31);
+	    OTHER(15);
 
 	    public final int header;
 	    private PacketType(int header) {
