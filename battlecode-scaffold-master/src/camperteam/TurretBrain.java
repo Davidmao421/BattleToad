@@ -66,7 +66,7 @@ public class TurretBrain implements Brain {
 	}
 
 	public void runTurn(RobotController rc) throws GameActionException {
-		rc.setIndicatorString(1, ""+radius+":Radius");
+		rc.setIndicatorString(1, "" + radius + ":Radius");
 		Signal[] signals = rc.emptySignalQueue();
 
 		for (Signal s : signals) {
@@ -76,23 +76,25 @@ public class TurretBrain implements Brain {
 			}
 
 		}
-		if (isInPosition(rc)) {
-			if (rc.getType() == RobotType.TTM) {
-				rc.unpack();
-			}
-		} else {
+		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
+		if (shouldMoveIn || shouldMoveOut) {
 			if (rc.getType() == RobotType.TURRET) {
 				rc.pack();
 			}
 		}
-		if (rc.getType() == RobotType.TTM) {
-			position(rc);
-		} else {
-			attackNearby(rc);
+		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+			if (shouldMoveOut) {
+				forward(rc);
+			} else if (shouldMoveIn) {
+				reverse(rc);
+			} else {
+				rc.unpack();
+			}
 		}
+		attackNearby(rc);
 	}
 
-	private boolean isInPosition(RobotController rc) throws GameActionException {
+	private boolean shouldMoveOut(RobotController rc) throws GameActionException {
 		MapLocation loc;
 		Direction dir = rc.getLocation().directionTo(center).opposite();
 		for (int i = -1; i <= 1; i++) {
@@ -101,16 +103,38 @@ public class TurretBrain implements Brain {
 					rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8])) == null) {
 				int r = loc.distanceSquaredTo(center);
 				if (r < radius) {
-					return false;
+					return true;
 				}
 			}
 		}
-		return true;
+		return false;
 	}
 
-	private void position(RobotController rc) throws GameActionException {
+	private boolean shouldMoveIn(RobotController rc) throws GameActionException {
+		MapLocation loc;
+		Direction dir = rc.getLocation().directionTo(center);
+		for (int i = -1; i <= 1; i++) {
+			loc = rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8]);
+			if (rc.senseRobotAtLocation(
+					rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8])) == null) {
+				int r = loc.distanceSquaredTo(center);
+				if (r > radius) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private void forward(RobotController rc) throws GameActionException {
 		if (rc.isCoreReady()) {
 			Statics.moveTo(rc.getLocation().directionTo(center).opposite(), rc);
+		}
+	}
+
+	private void reverse(RobotController rc) throws GameActionException {
+		if (rc.isCoreReady()) {
+			Statics.moveTo(rc.getLocation().directionTo(center), rc);
 		}
 	}
 

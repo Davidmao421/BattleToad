@@ -61,22 +61,27 @@ public class ArchonBrain implements Brain {
 		radius = 2;
 	}
 
-	private void buildTurretCluster() throws GameActionException {
-		if (isLeader) {
+	private void cluster() throws GameActionException {
+		if (isLeader) {// leader
 			if (rc.hasBuildRequirements(RobotType.TURRET)) {
 				if (buildRobot(RobotType.TURRET)) {
-					radius += 0.5;
 				} else {
 					rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 				}
 			} else {
+				updateRadius(rc);
 				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 			}
 			if (rc.isCoreReady()) {
 				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 			}
-		} else {
+		} else {// not leader
 			if (!digNearby(rc)) {
+				circleOfHealing(rc);
+				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
+				if (com.distanceSquaredTo(lastLoc) > 2) {
+					Statics.moveTo(rc.getLocation().directionTo(com), rc);
+				}
 				for (int i = 0; i < 8; i++) {
 					Direction dir = Statics.directions[(i + 8) % 8];
 					MapLocation loc = rc.getLocation().add(dir);
@@ -88,6 +93,51 @@ public class ArchonBrain implements Brain {
 					}
 				}
 			}
+		}
+	}
+
+	private void circleOfHealing(RobotController rc) throws GameActionException {
+		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
+		ArrayList<RobotInfo> targets = new ArrayList<RobotInfo>();
+		for (RobotInfo r : friends) {
+			if (r.type == RobotType.TURRET) {
+				if (r.location.distanceSquaredTo(rc.getLocation()) <= rc.getType().attackRadiusSquared) {
+					if (r.health < r.maxHealth) {
+						targets.add(r);
+					}
+				}
+			}
+		}
+
+		if (!targets.isEmpty()) {
+			RobotInfo triage = targets.get(0);
+			for (RobotInfo r : targets) {
+				if (r.health < triage.health) {
+					triage = r;
+				}
+			}
+			rc.repair(triage.location);
+		}
+	}
+
+	private void updateRadius(RobotController rc) {
+		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
+		int tCount = 0;
+		int ttmCount = 0;
+		int aCount = 0;
+		for (RobotInfo r : friends) {
+			if (r.type == RobotType.TURRET) {
+				tCount++;
+			} else if (r.type == RobotType.TTM) {
+				ttmCount++;
+			} else if (r.type == RobotType.ARCHON) {
+				aCount++;
+			}
+		}
+		if (aCount == 0) {
+			radius = 2d + tCount/1.5 + ttmCount*2d;
+		} else {
+			radius = 4d + tCount / 3d + ttmCount;
 		}
 	}
 
@@ -164,7 +214,7 @@ public class ArchonBrain implements Brain {
 			group();
 			break;
 		case CLUSTER:
-			buildTurretCluster();
+			cluster();
 			break;
 		default:
 			break;
