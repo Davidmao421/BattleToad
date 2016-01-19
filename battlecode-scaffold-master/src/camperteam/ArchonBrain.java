@@ -9,21 +9,19 @@ public class ArchonBrain implements Brain {
 		CLUSTER, GROUP, NONE;
 	}
 
-	private int turns;
 	private Routine last;
 	private Routine current;
 	private static final int BROADCAST_RANGE = 70;
 	private RobotController rc;
 	private MapLocation lastLoc;
-	private MapLocation[] archonLocs;
-	private List<MapLocation> knownParts;
+	private double radius;
 	// private List<MapLocation> knownEnemyArchons;
-	private List<MapLocation> knownNeutralRobots;
 
 	private Map<Integer, RobotInfo> robots;
 
 	int panicRobot = -1;
-	int head;
+	int leader;
+	boolean isLeader;
 
 	private void setRoutine(Routine r) {
 		last = current;
@@ -57,46 +55,109 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void initialize() throws GameActionException {
-		turns = 0;
 		lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		current = Routine.GROUP;
-
-		knownNeutralRobots = new LinkedList<MapLocation>();
-		knownParts = new LinkedList<MapLocation>();
 		robots = new TreeMap<Integer, RobotInfo>();
+		radius = 2;
 	}
 
 	private void buildTurretCluster() throws GameActionException {
-		if (rc.getID() == head) {
+		if (isLeader) {
 			if (rc.hasBuildRequirements(RobotType.TURRET)) {
-				buildRobot(RobotType.TURRET);
+				if (buildRobot(RobotType.TURRET)) {
+					radius += 0.5;
+				} else {
+					rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+				}
+			} else {
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}
+			if (rc.isCoreReady()) {
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}
+		} else {
+			if (!digNearby(rc)) {
+				for (int i = 0; i < 8; i++) {
+					Direction dir = Statics.directions[(i + 8) % 8];
+					MapLocation loc = rc.getLocation().add(dir);
+					if (rc.canMove(dir)) {
+						if (loc.distanceSquaredTo(lastLoc) <= 2) {
+							rc.move(dir);
+							return;
+						}
+					}
+				}
 			}
 		}
 	}
 
+	private static boolean digNearby(RobotController rc) throws GameActionException {
+		int k = (int) (Math.random() * 8);
+		for (int i = 0; i < 8; i++) {
+			MapLocation loc = rc.getLocation().add(Statics.directions[(i + k) % 8]);
+			if (rc.senseRubble(loc) > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
+				rc.clearRubble(Statics.directions[(i + k) % 8]);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void group() throws GameActionException {
-		Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
+		if (isLeader) {
+			Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
+		} else {
+			if (rc.getLocation().equals(lastLoc)) {
+				for (int i = 0; i < 8; i++) {
+					Direction dir = Statics.directions[i];
+					if (rc.canMove(dir)) {
+						rc.move(dir);
+						return;
+					}
+				}
+				digNearby(rc);
+			} else {
+				Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
+			}
+		}
 	}
 
 	Direction _moveDirection;
 
 	private void determineRoutine() {
-		setRoutine(Routine.GROUP);
+		if (isLeader) {
+			if (!rc.getLocation().equals(lastLoc)) {
+				setRoutine(Routine.GROUP);
+			} else {
+				setRoutine(Routine.CLUSTER);
+			}
+		} else {
+			if (lastLoc.distanceSquaredTo(rc.getLocation()) > 2) {
+				setRoutine(Routine.GROUP);
+			} else {
+				setRoutine(Routine.CLUSTER);
+			}
+		}
+
 	}
 
 	private void runTurn() throws GameActionException {
 		if (!rc.isCoreReady()) {
-			turns--;
 			return;
 		}
-		if (rc.getRoundNum() == 0) {
+		if (rc.getRoundNum() == 1) {
 			Signal[] incoming = rc.emptySignalQueue();
-			rc.setIndicatorString(1, "" + incoming.length + " messages");
-			rc.broadcastSignal(BROADCAST_RANGE * 2);
+			rc.setIndicatorString(2, "" + incoming.length + " messages");
+			rc.broadcastSignal(BROADCAST_RANGE * 30);
+			if (incoming.length == 0) {
+				isLeader = true;
+			} else {
+				isLeader = false;
+			}
 		}
+		determineRoutine();
 		switch (current) {
 		case NONE:
-			determineRoutine();
 			runTurn();
 			return;
 		case GROUP:
@@ -141,7 +202,6 @@ public class ArchonBrain implements Brain {
 
 		while (true) {
 			Clock.yield();
-			turns++;
 			try {
 				runTurn();
 			} catch (GameActionException e) {
