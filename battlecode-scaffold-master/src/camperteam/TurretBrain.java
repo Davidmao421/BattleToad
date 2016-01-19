@@ -6,8 +6,12 @@ public class TurretBrain implements Brain {
 
 	private int radius;
 	private MapLocation center;
+	private double previousHealth;
+	private int timer;
 
 	public void initialize(RobotController rc) {
+		timer = 0;
+		previousHealth = rc.getHealth();
 		radius = 5;
 		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
 		rc.setIndicatorDot(center, 128, 128, 128);
@@ -78,20 +82,35 @@ public class TurretBrain implements Brain {
 		}
 		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
 		if (shouldMoveIn || shouldMoveOut) {
-			if (rc.getType() == RobotType.TURRET) {
-				rc.pack();
+			if (!enemiesInSight(rc)) {
+				if (rc.getType() == RobotType.TURRET) {
+					timer = 20;
+					rc.pack();
+				}
 			}
 		}
 		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if (shouldMoveOut) {
+			if (timer == 0 || enemiesInSight(rc)) {
+				rc.unpack();
+			} else if(shouldMoveOut) {
 				forward(rc);
 			} else if (shouldMoveIn) {
 				reverse(rc);
-			} else {
+			} else if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
 				rc.unpack();
 			}
 		}
 		attackNearby(rc);
+	}
+
+	private boolean enemiesInSight(RobotController rc) {
+		RobotInfo[] robots = rc.senseNearbyRobots();
+		for (RobotInfo robot:robots) {
+			if (robot.team!=rc.getTeam()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean shouldMoveOut(RobotController rc) throws GameActionException {
@@ -151,6 +170,9 @@ public class TurretBrain implements Brain {
 				continue;
 			try {
 				runTurn(rc);
+				if (timer > 0) {
+					timer--;
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println(e.getMessage());

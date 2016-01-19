@@ -62,8 +62,9 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void cluster() throws GameActionException {
+
 		if (isLeader) {// leader
-			if (rc.hasBuildRequirements(RobotType.TURRET)) {
+			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
 				if (buildRobot(RobotType.TURRET)) {
 				} else {
 					rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
@@ -73,16 +74,20 @@ public class ArchonBrain implements Brain {
 				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 			}
 			if (rc.isCoreReady()) {
-				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
-			}
-		} else {// not leader
-			if (!digNearby(rc)) {
 				circleOfHealing(rc);
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}		
+		} else {// not leader
+			circleOfHealing(rc);
+			if (!digNearby(rc)) {
 				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
-				if (com.distanceSquaredTo(lastLoc) > 2) {
+				if (com.distanceSquaredTo(lastLoc) > 2) {//adjust COM
 					Statics.moveTo(rc.getLocation().directionTo(com), rc);
 				}
-				for (int i = 0; i < 8; i++) {
+				if (!rc.isCoreReady()) {
+					return;
+				}
+				for (int i = 0; i < 8; i++) {//shuffle
 					Direction dir = Statics.directions[(i + 8) % 8];
 					MapLocation loc = rc.getLocation().add(dir);
 					if (rc.canMove(dir)) {
@@ -100,7 +105,7 @@ public class ArchonBrain implements Brain {
 		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
 		ArrayList<RobotInfo> targets = new ArrayList<RobotInfo>();
 		for (RobotInfo r : friends) {
-			if (r.type == RobotType.TURRET) {
+			if (r.type == RobotType.TURRET || r.type == RobotType.TTM) {
 				if (r.location.distanceSquaredTo(rc.getLocation()) <= rc.getType().attackRadiusSquared) {
 					if (r.health < r.maxHealth) {
 						targets.add(r);
@@ -135,9 +140,9 @@ public class ArchonBrain implements Brain {
 			}
 		}
 		if (aCount == 0) {
-			radius = 2d + tCount/1.5 + ttmCount*2d;
+			radius = 2d + tCount + ttmCount;
 		} else {
-			radius = 4d + tCount / 3d + ttmCount;
+			radius = 4d + tCount + ttmCount;
 		}
 	}
 
@@ -195,15 +200,17 @@ public class ArchonBrain implements Brain {
 		if (!rc.isCoreReady()) {
 			return;
 		}
-		if (rc.getRoundNum() == 1) {
+		if (rc.getRoundNum() == 1) {//select leader
 			Signal[] incoming = rc.emptySignalQueue();
 			rc.setIndicatorString(2, "" + incoming.length + " messages");
 			rc.broadcastSignal(BROADCAST_RANGE * 30);
-			if (incoming.length == 0) {
-				isLeader = true;
-			} else {
-				isLeader = false;
+			for (Signal s:incoming) {
+				if(s.getTeam()==rc.getTeam()) {
+					isLeader = false;
+					break;
+				}
 			}
+			isLeader = true;
 		}
 		determineRoutine();
 		switch (current) {
