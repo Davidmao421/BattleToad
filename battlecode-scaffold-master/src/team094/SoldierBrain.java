@@ -237,7 +237,6 @@ public class SoldierBrain implements Brain {
 		} else if (!attack(rc) && rc.isCoreReady()) {
 			move(rc);
 		}
-
 	}
 
 }
