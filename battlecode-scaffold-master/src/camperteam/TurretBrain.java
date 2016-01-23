@@ -1,5 +1,7 @@
 package camperteam;
 
+import java.util.ArrayList;
+
 import battlecode.common.*;
 
 public class TurretBrain implements Brain {
@@ -8,12 +10,14 @@ public class TurretBrain implements Brain {
 	private MapLocation center;
 	private double previousHealth;
 	private int timer;
+	private ArrayList<MapLocation> targets;
 
 	public void initialize(RobotController rc) {
 		timer = 0;
 		previousHealth = rc.getHealth();
 		radius = 5;
 		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
+		targets = new ArrayList<MapLocation>();
 		rc.setIndicatorDot(center, 128, 128, 128);
 	}
 
@@ -39,6 +43,13 @@ public class TurretBrain implements Brain {
 		if (target != null) {
 			attack(rc, target);
 			return true;
+		}
+		else {
+			RobotInfo[] temp = new RobotInfo[targets.size()];
+			RobotInfo target2 = Statics.closestRobot(rc.getLocation(), targets.toArray(temp), GameConstants.TURRET_MINIMUM_RANGE);
+			if (target2 != null) {
+				attack(rc, target);
+			}
 		}
 		return false;
 	}
@@ -72,11 +83,18 @@ public class TurretBrain implements Brain {
 	public void runTurn(RobotController rc) throws GameActionException {
 		rc.setIndicatorString(1, "" + radius + ":Radius");
 		Signal[] signals = rc.emptySignalQueue();
-
+		targets.clear();
 		for (Signal s : signals) {
 			if (s.getTeam() == rc.getTeam()) {
 				center = s.getLocation();
 				radius = s.getMessage()[0];
+			}
+			else if (SignalEncoder.getPacketType(s) == PacketType.ATTACK_ENEMY) {
+				Signal r = SignalEncoder.decodeAttackEnemy(s);
+				MapLocation enemyLoc = r.getLocation();
+				if(!targets.contains(enemyLoc)) {
+					targets.add(enemyLoc);
+				}
 			}
 
 		}

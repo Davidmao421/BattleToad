@@ -78,9 +78,17 @@ public class ScoutBrain implements Brain {
 		}
 
 	}
+	
+	public void senseEnemies() throws GameActionException {
+		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
+		for(RobotInfo r: enemies) {
+			Signal message = SignalEncoder.encodeAttackEnemy(0, r.location);
+			rc.broadcastMessageSignal(message.getMessage()[0], message.getMessage()[1], rc.getType().sensorRadiusSquared);
+		}
+	}
 
 	public void runTurn() throws GameActionException {
-		senseBroadcast();
+		/*senseBroadcast();
 		if (broadcast())
 			return;
 		rc.setIndicatorString(0, "Radiate: " + radiate);
@@ -88,8 +96,8 @@ public class ScoutBrain implements Brain {
 			radiate(); // TODO: working movement
 		} else if (radiate == false) {
 			move();
-		}
-
+		}*/
+		senseEnemies();
 	}
 
 	public void move() throws GameActionException {

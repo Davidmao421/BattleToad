@@ -55,7 +55,8 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void initialize() throws GameActionException {
-		lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
+		//lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
+		lastLoc = rc.getInitialArchonLocations(rc.getTeam())[0];
 		current = Routine.GROUP;
 		robots = new TreeMap<Integer, RobotInfo>();
 		radius = 2;
@@ -69,7 +70,10 @@ public class ArchonBrain implements Brain {
 				} else {
 					rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 				}
-			} else {
+			} /*else if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.SCOUT)) {
+				//buildRobot(RobotType.SCOUT);
+			}*/
+			else {
 				updateRadius(rc);
 				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
 			}
