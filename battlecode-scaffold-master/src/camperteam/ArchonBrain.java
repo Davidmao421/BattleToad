@@ -65,14 +65,16 @@ public class ArchonBrain implements Brain {
 	private void cluster() throws GameActionException {
 
 		if (isLeader) {// leader
-			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
-				if (buildRobot(RobotType.TURRET)) {
-				} else {
-					rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
-				}
-			} /*else if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.SCOUT)) {
+			if (hasSpace(rc)) {
+				if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
+					if (buildRobot(RobotType.TURRET)) {
+						} else {
+							rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+						}			
+				} /*else if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.SCOUT)) {
 				//buildRobot(RobotType.SCOUT);
 			}*/
+			}
 			else {
 				updateRadius(rc);
 				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
@@ -150,6 +152,15 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
+	private static boolean hasSpace(RobotController rc) throws GameActionException {
+		for(Direction d: Statics.directions) {
+			MapLocation other = rc.getLocation().add(d);
+			if(rc.onTheMap(other)&&!rc.isLocationOccupied(other)&&rc.senseRubble(other)<GameConstants.RUBBLE_OBSTRUCTION_THRESH)
+				return true;
+		}
+		return false;
+	}
+	
 	private static boolean digNearby(RobotController rc) throws GameActionException {
 		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
