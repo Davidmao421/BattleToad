@@ -1,17 +1,15 @@
 package camperteam;
 
 import battlecode.common.*;
-import camperteam.SimpleEncoder.MessageType;
 
-public class TurretBrain implements Brain {
+public class CircleTurretBrain implements Brain {
 
 	private int radius;
 	private MapLocation center;
 	private double previousHealth;
 	private int timer;
-	private MapLocation attackLoc;
 
-	private void initialize(RobotController rc) {
+	public void initialize(RobotController rc) {
 		timer = 0;
 		previousHealth = rc.getHealth();
 		radius = 5;
@@ -19,7 +17,7 @@ public class TurretBrain implements Brain {
 		rc.setIndicatorDot(center, 128, 128, 128);
 	}
 
-	private void attack(RobotController rc, MapLocation hostile) throws GameActionException {
+	public void attack(RobotController rc, MapLocation hostile) throws GameActionException {
 		if (rc.getType() == RobotType.TTM)
 			rc.unpack();
 
@@ -29,34 +27,86 @@ public class TurretBrain implements Brain {
 			rc.attackLocation(hostile);
 	}
 
-	private void attack(RobotController rc, RobotInfo hostile) throws GameActionException {
+	public void attack(RobotController rc, RobotInfo hostile) throws GameActionException {
 		attack(rc, hostile.location);
 		return;
 	}
 
-	private boolean attackNearby(RobotController rc) throws GameActionException {
+	public boolean attackNearby(RobotController rc) throws GameActionException {
 		RobotInfo[] hostiles = rc.senseHostileRobots(rc.getLocation(), -1);
 		RobotInfo target = Statics.closestRobot(rc.getLocation(), hostiles, GameConstants.TURRET_MINIMUM_RANGE);
 		// This if statement will need to get much more difficult
-		if (target != null && rc.isCoreReady() && rc.isWeaponReady()) {
+		if (target != null) {
 			attack(rc, target);
 			return true;
 		}
 		return false;
 	}
 
-	private boolean attackSpecific(RobotController rc, MapLocation target) throws GameActionException {
-		if (rc.canAttackLocation(target) && rc.isCoreReady() && rc.isWeaponReady()) {
-			rc.attackLocation(target);
-			return true;
+	public void move(RobotController rc, Direction d) throws GameActionException {
+		if (rc.getType() == RobotType.TURRET) {
+			rc.pack();
+			return;
 		}
-		return false;
+
+		if (rc.canMove(d) && rc.isCoreReady())
+			rc.move(d);
+	}
+
+	public void attackSpecific(RobotController rc, MapLocation target) throws GameActionException {
+		int dist = rc.getLocation().distanceSquaredTo(target);
+		if (dist < rc.getType().attackRadiusSquared) {
+			if (dist > GameConstants.TURRET_MINIMUM_RANGE) {
+				if (rc.canAttackLocation(target) && rc.isCoreReady()) {
+					rc.attackLocation(target);
+					return;
+				}
+			} else {
+				move(rc, target.directionTo(rc.getLocation()));
+			}
+		} else {
+			move(rc, rc.getLocation().directionTo(target));
+		}
+	}
+
+	public void runTurn(RobotController rc) throws GameActionException {
+		rc.setIndicatorString(1, "" + radius + ":Radius");
+		Signal[] signals = rc.emptySignalQueue();
+
+		for (Signal s : signals) {
+			if (s.getTeam() == rc.getTeam()) {
+				center = s.getLocation();
+				radius = s.getMessage()[0];
+			}
+
+		}
+		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
+		if (shouldMoveIn || shouldMoveOut) {
+			if (!enemiesInSight(rc)) {
+				if (rc.getType() == RobotType.TURRET) {
+					timer = 20;
+					rc.pack();
+				}
+			}
+		}
+		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+			if (timer == 0 || enemiesInSight(rc)) {
+				rc.unpack();
+			} else if(shouldMoveOut) {
+				forward(rc);
+			} else if (shouldMoveIn) {
+				reverse(rc);
+			} else if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+				rc.unpack();
+			}
+		}
+		attackNearby(rc);
 	}
 
 	private boolean enemiesInSight(RobotController rc) {
 		RobotInfo[] robots = rc.senseNearbyRobots();
-		for (RobotInfo robot : robots) {
-			if (robot.team != rc.getTeam()) {
+		for (RobotInfo robot:robots) {
+			if (robot.team!=rc.getTeam()) {
 				return true;
 			}
 		}
@@ -105,70 +155,6 @@ public class TurretBrain implements Brain {
 		if (rc.isCoreReady()) {
 			Statics.moveTo(rc.getLocation().directionTo(center), rc);
 		}
-	}
-
-	private void processSignals(RobotController rc) throws GameActionException {
-		Signal[] signals = rc.emptySignalQueue();
-
-		for (Signal s : signals) {
-			if (s.getTeam() == rc.getTeam()) {
-				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
-				switch (type) {
-				case ATTACK:
-					attackLoc = SimpleEncoder.decodeLocation(s.getMessage()[1]);
-					break;
-				case CENTERHERE:
-					break;
-				case LEADERCHECK:
-					break;
-				case MOVETO:
-					break;
-				case NEUTRALARCHON:
-					break;
-				case RADIUS:
-					center = s.getLocation();
-					radius = s.getMessage()[1];
-					break;
-				case ZOMBIEDEN:
-					break;
-				default:
-					break;
-				}
-			}
-		}
-	}
-
-	private void runTurn(RobotController rc) throws GameActionException {
-		rc.setIndicatorString(1, "" + radius + ":Radius");
-		processSignals(rc);
-		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
-		if (shouldMoveIn || shouldMoveOut) {
-			if (!enemiesInSight(rc)) {
-				if (rc.getType() == RobotType.TURRET) {
-					timer = 20;
-					rc.pack();
-				}
-			}
-		}
-		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if (timer == 0 || enemiesInSight(rc)) {
-				rc.unpack();
-			} else if (shouldMoveOut) {
-				forward(rc);
-			} else if (shouldMoveIn) {
-				reverse(rc);
-			} else if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-				rc.unpack();
-			}
-		}
-		if (attackLoc != null) {
-			if (attackSpecific(rc, attackLoc)) {
-				attackLoc = null;
-				return;
-			}
-			attackLoc = null;
-		}
-		attackNearby(rc);
 	}
 
 	public void run(RobotController rc) {
