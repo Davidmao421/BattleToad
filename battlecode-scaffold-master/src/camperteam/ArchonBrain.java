@@ -95,7 +95,18 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
-	private boolean digNearby(RobotController rc) throws GameActionException {
+
+	private  boolean hasSpace(RobotController rc) throws GameActionException {
+		for(Direction d: Statics.directions) {
+			MapLocation other = rc.getLocation().add(d);
+			if(rc.onTheMap(other)&&!rc.isLocationOccupied(other)&&rc.senseRubble(other)<GameConstants.RUBBLE_OBSTRUCTION_THRESH)
+				return true;
+		}
+		return false;
+	}
+	
+	private static boolean digNearby(RobotController rc) throws GameActionException {
+		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
 			MapLocation loc = rc.getLocation().add(Statics.directions[i]);
 			if (rc.senseRubble(loc) > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
@@ -104,10 +115,6 @@ public class ArchonBrain implements Brain {
 			}
 		}
 		return false;
-	}
-
-	private void beeline(MapLocation loc) throws GameActionException {
-
 	}
 
 	private void group() throws GameActionException {
@@ -125,7 +132,53 @@ public class ArchonBrain implements Brain {
 			Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
 		}
 	}
+	
+	private void rCluster() throws GameActionException {
 
+
+		if (isLeader) {// leader
+			if (hasSpace(rc)) {
+				if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
+					if (buildRobot(RobotType.TURRET)) {
+						} else {
+							rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+						}			
+				} /*else if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.SCOUT)) {
+				//buildRobot(RobotType.SCOUT);
+			}*/
+			}
+			else {
+				updateRadius(rc);
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}
+			if (rc.isCoreReady()) {
+				circleOfHealing(rc);
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}		
+		} else {// not leader
+			circleOfHealing(rc);
+			if (!digNearby(rc)) {
+				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
+				if (com.distanceSquaredTo(lastLoc) > 2) {//adjust COM
+					Statics.moveTo(rc.getLocation().directionTo(com), rc);
+				}
+				if (!rc.isCoreReady()) {
+					return;
+				}
+				for (int i = 0; i < 8; i++) {//shuffle
+					Direction dir = Statics.directions[(i + 8) % 8];
+					MapLocation loc = rc.getLocation().add(dir);
+					if (rc.canMove(dir)) {
+						if (loc.distanceSquaredTo(lastLoc) <= 2) {
+							rc.move(dir);
+							return;
+						}
+					}
+				}
+			}
+		}
+	
+	}
 	private void cluster() throws GameActionException {
 		circleOfHealing(rc);
 		if (isLeader) {// leader

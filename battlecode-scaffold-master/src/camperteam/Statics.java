@@ -98,6 +98,21 @@ public class Statics {
 		}
 		return closest;
 	}
+	
+	public static MapLocation closestRobot(MapLocation loc, MapLocation[] info, int minDist) {
+		if (info.length == 0)
+			return null;
+		MapLocation closest = info[0];
+		int closestDist = Integer.MAX_VALUE;
+		for (int i = 1; i < info.length; i++) {
+			int dist = sqrDist(loc, info[i]);
+			if (dist < closestDist && dist > minDist) {
+				closestDist = dist;
+				closest = info[i];
+			}
+		}
+		return closest;
+	}
 
 	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info) {
 		return closestRobot(loc, info, 0);

@@ -1,5 +1,7 @@
 package camperteam;
 
+import java.util.ArrayList;
+
 import battlecode.common.*;
 import camperteam.SimpleEncoder.MessageType;
 
@@ -10,12 +12,14 @@ public class TurretBrain implements Brain {
 	private double previousHealth;
 	private int timer;
 	private MapLocation attackLoc;
+	private ArrayList<MapLocation> targets;
 
 	private void initialize(RobotController rc) {
 		timer = 0;
 		previousHealth = rc.getHealth();
 		radius = 5;
 		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
+		targets = new ArrayList<MapLocation>();
 		rc.setIndicatorDot(center, 128, 128, 128);
 	}
 
@@ -42,6 +46,13 @@ public class TurretBrain implements Brain {
 			attack(rc, target);
 			return true;
 		}
+		else {
+			RobotInfo[] temp = new RobotInfo[targets.size()];
+			RobotInfo target2 = Statics.closestRobot(rc.getLocation(), targets.toArray(temp), GameConstants.TURRET_MINIMUM_RANGE);
+			if (target2 != null) {
+				attack(rc, target);
+			}
+		}
 		return false;
 	}
 
@@ -51,6 +62,16 @@ public class TurretBrain implements Brain {
 			return true;
 		}
 		return false;
+	}
+
+	public void move(RobotController rc, Direction d) throws GameActionException {
+		if (rc.getType() == RobotType.TURRET) {
+			rc.pack();
+			return;
+		}
+
+		if (rc.canMove(d) && rc.isCoreReady())
+			rc.move(d);
 	}
 
 	private boolean enemiesInSight(RobotController rc) {
@@ -137,7 +158,47 @@ public class TurretBrain implements Brain {
 			}
 		}
 	}
+	
+	public void rahulRunTurn(RobotController rc) throws GameActionException {
+		rc.setIndicatorString(1, "" + radius + ":Radius");
+		Signal[] signals = rc.emptySignalQueue();
+		targets.clear();
+		for (Signal s : signals) {
+			if (s.getTeam() == rc.getTeam()) {
+				center = s.getLocation();
+				radius = s.getMessage()[0];
+			}
+			else if (SignalEncoder.getPacketType(s) == PacketType.ATTACK_ENEMY) {
+				Signal r = SignalEncoder.decodeAttackEnemy(s);
+				MapLocation enemyLoc = r.getLocation();
+				if(!targets.contains(enemyLoc)) {
+					targets.add(enemyLoc);
+				}
+			}
 
+		}
+		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
+		if (shouldMoveIn || shouldMoveOut) {
+			if (!enemiesInSight(rc)) {
+				if (rc.getType() == RobotType.TURRET) {
+					timer = 20;
+					rc.pack();
+				}
+			}
+		}
+		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+			if (timer == 0 || enemiesInSight(rc)) {
+				rc.unpack();
+			} else if(shouldMoveOut) {
+				forward(rc);
+			} else if (shouldMoveIn) {
+				reverse(rc);
+			} else if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+				rc.unpack();
+			}
+		}
+	}
+	
 	private void runTurn(RobotController rc) throws GameActionException {
 		rc.setIndicatorString(1, "" + radius + ":Radius");
 		processSignals(rc);
