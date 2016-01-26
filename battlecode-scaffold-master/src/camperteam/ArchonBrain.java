@@ -133,55 +133,8 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
-	private void rahulCluster() throws GameActionException {
-
-		if (isLeader) {// leader
-			if (hasSpace(rc)) {
-				if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
-					if (buildRobot(RobotType.TURRET)) {
-					} else {
-						rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
-					}
-				} /*
-					 * else if(rc.isCoreReady() &&
-					 * rc.hasBuildRequirements(RobotType.SCOUT)) {
-					 * //buildRobot(RobotType.SCOUT); }
-					 */
-			} else {
-				updateRadius(rc);
-				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
-			}
-			if (rc.isCoreReady()) {
-				circleOfHealing(rc);
-				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
-			}
-		} else {// not leader
-			circleOfHealing(rc);
-			if (!digNearby(rc)) {
-				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
-				if (com.distanceSquaredTo(lastLoc) > 2) {// adjust COM
-					Statics.moveTo(rc.getLocation().directionTo(com), rc);
-				}
-				if (!rc.isCoreReady()) {
-					return;
-				}
-				for (int i = 0; i < 8; i++) {// shuffle
-					Direction dir = Statics.directions[(i + 8) % 8];
-					MapLocation loc = rc.getLocation().add(dir);
-					if (rc.canMove(dir)) {
-						if (loc.distanceSquaredTo(lastLoc) <= 2) {
-							rc.move(dir);
-							return;
-						}
-					}
-				}
-			}
-		}
-
-	}
-
 	private void cluster() throws GameActionException {
-		circleOfHealing(rc);//healing has no core delay
+		circleOfHealing(rc);// healing has no core delay
 		if (isLeader) {// leader
 			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
 				if (buildRobot(RobotType.TURRET)) {

@@ -56,15 +56,7 @@ public class TurretBrain implements Brain {
 		return false;
 	}
 
-	private boolean attackSpecific(RobotController rc, MapLocation target) throws GameActionException {
-		if (rc.canAttackLocation(target) && rc.isCoreReady() && rc.isWeaponReady()) {
-			rc.attackLocation(target);
-			return true;
-		}
-		return false;
-	}
-
-	public void move(RobotController rc, Direction d) throws GameActionException {
+	private void move(RobotController rc, Direction d) throws GameActionException {
 		if (rc.getType() == RobotType.TURRET) {
 			rc.pack();
 			return;
@@ -72,6 +64,14 @@ public class TurretBrain implements Brain {
 
 		if (rc.canMove(d) && rc.isCoreReady())
 			rc.move(d);
+	}
+
+	private boolean attackSpecific(RobotController rc, MapLocation target) throws GameActionException {
+		if (rc.canAttackLocation(target) && rc.isCoreReady() && rc.isWeaponReady()) {
+			rc.attackLocation(target);
+			return true;
+		}
+		return false;
 	}
 
 	private boolean enemiesInSight(RobotController rc) {
@@ -203,10 +203,10 @@ public class TurretBrain implements Brain {
 		processSignals(rc);
 
 		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if(validLocation(rc, rc.getLocation())) {
+			if (validLocation(rc, rc.getLocation())) {
 				rc.unpack();
 			} else {
-				
+
 			}
 		}
 		if (attackLoc != null) {
