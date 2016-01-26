@@ -140,9 +140,20 @@ public class ArchonBrain implements Brain {
 		for (RobotInfo i : infos)
 			knownNeutralRobots.add(i.location);
 	}
-
+	public void senseEnemies() throws GameActionException {
+		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
+		for (RobotInfo r : enemies) {
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY),
+						SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
+		}
+	}
+	int messagesSent;
 	private void scavenger() throws GameActionException {
+		messagesSent=0;
 		sense();
+		senseEnemies();
 		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0) {
 			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
 		}
