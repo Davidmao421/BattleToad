@@ -20,7 +20,7 @@ public class TurretBrain implements Brain {
 
 		if (hostile == null)
 			return;
-		if (rc.canAttackLocation(hostile) && rc.isCoreReady())
+		if (rc.canAttackLocation(hostile) && rc.isCoreReady() && rc.isWeaponReady())
 			rc.attackLocation(hostile);
 	}
 

@@ -51,7 +51,7 @@ public class ViperBrain implements Brain {
 			robots = rc.senseNearbyRobots(-1, Team.ZOMBIE);
 			closestEnemy = Statics.closestRobot(enemyCom, robots);
 
-			if (Statics.sqrDist(enemyCom, closestEnemy.location) > Statics.sqrDist(closestEnemy.location, teamCom)) {
+			if (enemyCom.distanceSquaredTo(closestEnemy.location) > closestEnemy.location.distanceSquaredTo(teamCom)) {
 				attack(rc, closestEnemy);
 				return;
 			}

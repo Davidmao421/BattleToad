@@ -22,6 +22,8 @@ public class ArchonBrain implements Brain {
 	private int archonIndex;
 	private boolean isScavenger;
 	int turns;
+
+	int guardsBuilt;
 	// private List<MapLocation> knownEnemyArchons;
 
 	private Map<Integer, RobotInfo> robots;
@@ -140,7 +142,6 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void scavenger() throws GameActionException {
-		turns++;
 		sense();
 		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0) {
 			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
@@ -201,7 +202,7 @@ public class ArchonBrain implements Brain {
 				i++;
 			} // reaches here if cannot activate
 			Direction d = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
-			if (rc.isCoreReady() && d!=null)
+			if (rc.isCoreReady() && d != null)
 				Statics.moveTo(d, rc);
 			return;
 		}
@@ -258,7 +259,7 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void randomlyMove() throws GameActionException {
-		if (turns < 50)
+		if (turns < 150)
 			return;
 		if (!rc.isCoreReady())
 			return;
@@ -311,6 +312,19 @@ public class ArchonBrain implements Brain {
 		circleOfHealing(rc);
 		if (isLeader) {// leader
 			if (rc.isCoreReady()) {
+				if (turns%150==0){
+					if (rc.hasBuildRequirements(RobotType.SCOUT)) {
+						buildRobot(RobotType.SCOUT);
+						guardsBuilt++;
+						return;
+					}
+				}
+				if (guardsBuilt < 4)
+					if (rc.hasBuildRequirements(RobotType.SOLDIER)) {
+						buildRobot(RobotType.SOLDIER);
+						guardsBuilt++;
+						return;
+					}
 				if (rc.hasBuildRequirements(RobotType.TURRET)) {
 					if (hasSpace(rc)) {
 						space = true;
@@ -336,7 +350,7 @@ public class ArchonBrain implements Brain {
 					MapLocation loc = rc.getLocation().add(dir);
 					if (rc.canMove(dir)) {
 						if (loc.distanceSquaredTo(lastLoc) <= 2) {
-							rc.move(dir);
+							Statics.moveTo(dir,rc);
 							return;
 						}
 					}
@@ -439,8 +453,8 @@ public class ArchonBrain implements Brain {
 			}
 		isScavenger = (startingLocs.length != 1 && archonIndex == startingLocs.length - 1);
 		turns = 0;
-		
-		buildRobot(RobotType.SOLDIER);
+		guardsBuilt = 0;
+		// buildRobot(RobotType.SOLDIER);
 	}
 
 	@Override
@@ -456,6 +470,7 @@ public class ArchonBrain implements Brain {
 			Clock.yield();
 			try {
 				runTurn();
+				turns++;
 			} catch (GameActionException e) {
 				e.printStackTrace();
 			}
