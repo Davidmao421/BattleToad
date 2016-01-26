@@ -37,14 +37,28 @@ public class TurretBrain implements Brain {
 			attack(rc, target);
 			return true;
 		} else {
-			RobotInfo[] temp = new RobotInfo[targets.size()];
-			RobotInfo target2 = Statics.closestRobot(rc.getLocation(), targets.toArray(temp),
-					GameConstants.TURRET_MINIMUM_RANGE);
-			if (target2 != null) {
-				attack(rc, target);
+			for (RobotInfo r : hostiles) {
+				targets.add(r.location);
+			}
+			if (targets.size() != 0) {
+				MapLocation[] temp = new MapLocation[targets.size()];
+				int i = 0;
+				for (MapLocation r : targets) {
+					temp[i] = r;
+					i++;
+				}
+				if (temp != null) {
+					MapLocation target2 = Statics.closestRobot(rc.getLocation(), temp,
+							GameConstants.TURRET_MINIMUM_RANGE);
+					if (target2 != null) {
+						System.out.print("target");
+						attack(rc, target2);
+					}
+				}
 			}
 		}
 		return false;
+
 	}
 
 	private void move(RobotController rc, Direction d) throws GameActionException {
@@ -157,9 +171,9 @@ public class TurretBrain implements Brain {
 	}
 
 	public void runTurn(RobotController rc) throws GameActionException {
+		targets = new ArrayList<MapLocation>();
 		processSignals(rc);
 		rc.setIndicatorString(1, "" + radius + ":Radius");
-		targets.clear();
 
 		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
 		if (shouldMoveIn || shouldMoveOut) {
