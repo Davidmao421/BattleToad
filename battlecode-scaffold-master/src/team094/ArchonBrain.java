@@ -21,6 +21,7 @@ public class ArchonBrain implements Brain {
 	private MapLocation[] startingLocs;
 	private int archonIndex;
 	private boolean isScavenger;
+	int turns;
 	// private List<MapLocation> knownEnemyArchons;
 
 	private Map<Integer, RobotInfo> robots;
@@ -116,11 +117,35 @@ public class ArchonBrain implements Brain {
 		}
 		return false;
 	}
-	
-	private void scavenger() throws GameActionException{
-		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0){
+
+	private void receive() {
+		Signal[] signals = rc.emptySignalQueue();
+		for (Signal s : signals) {
+			if (s.getMessage() == null || s.getTeam() != rc.getTeam())
+				continue;
+			if (SimpleEncoder.decodeType(s.getMessage()[0]) == SimpleEncoder.MessageType.NEUTRALARCHON)
+				knownNeutralRobots.add(SimpleEncoder.decodeLocation(s.getMessage()[1]));
+			else if (SimpleEncoder.decodeType(s.getMessage()[0]) == MessageType.PARTSCACHE)
+				knownParts.add(SimpleEncoder.decodeLocation(s.getMessage()[1]));
+		}
+	}
+
+	private void sense() {
+		MapLocation[] cache = rc.sensePartLocations(-1);
+		for (MapLocation l : cache)
+			knownParts.add(l);
+		RobotInfo[] infos = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+		for (RobotInfo i : infos)
+			knownNeutralRobots.add(i.location);
+	}
+
+	private void scavenger() throws GameActionException {
+		turns++;
+		sense();
+		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0) {
 			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
 		}
+		receive();
 		scavenge();
 	}
 
@@ -149,22 +174,25 @@ public class ArchonBrain implements Brain {
 	private List<MapLocation> knownNeutralRobots;
 
 	private void scavengeNeutrals() throws GameActionException {
-		RobotInfo[] sensedNeutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
-		RobotInfo[] neutrals = Statics.combineRobotInfo(sensedNeutrals, knownNeutralRobots.toArray(new RobotInfo[0]));
+		RobotInfo[] sensedNeutralsArr = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+		MapLocation[] sensedNeutrals = new MapLocation[sensedNeutralsArr.length];
+		for (int i = 0; i < sensedNeutrals.length; i++)
+			sensedNeutrals[i] = sensedNeutralsArr[i].location;
+		MapLocation[] neutrals = Statics.combineLocs(sensedNeutrals, knownNeutralRobots.toArray(new MapLocation[0]));
 
 		// if neutral robot
 		if (neutrals.length != 0) {
 			MapLocation[] locs = new MapLocation[neutrals.length];
 			int i = 0;
-			for (RobotInfo r : neutrals) {
-				if (r.location.distanceSquaredTo(rc.getLocation()) < rc.getType().sensorRadiusSquared
+			for (MapLocation r : neutrals) {
+				if (r.distanceSquaredTo(rc.getLocation()) < rc.getType().sensorRadiusSquared
 						&& !Statics.contains(r, sensedNeutrals)) {
 					knownNeutralRobots.remove(r);
 					if (knownNeutralRobots.size() + sensedNeutrals.length < 1)
 						return;
 					continue;
 				}
-				locs[i] = r.location;
+				locs[i] = r;
 				if (locs[i].distanceSquaredTo(rc.getLocation()) <= 2) {
 					if (rc.isCoreReady())
 						rc.activate(locs[i]);
@@ -173,7 +201,7 @@ public class ArchonBrain implements Brain {
 				i++;
 			} // reaches here if cannot activate
 			Direction d = rc.getLocation().directionTo(Statics.closestLoc(rc.getLocation(), locs));
-			if (rc.isCoreReady())
+			if (rc.isCoreReady() && d!=null)
 				Statics.moveTo(d, rc);
 			return;
 		}
@@ -230,9 +258,16 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void randomlyMove() throws GameActionException {
-		if (!rc.isCoreReady())return;
-		if (!buildRobot(RobotType.SCOUT))
-			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);;
+		if (turns < 50)
+			return;
+		if (!rc.isCoreReady())
+			return;
+		if (!buildRobot(RobotType.SCOUT)) {
+			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
+
+		} else {
+			turns = 0;
+		}
 	}
 
 	private void scavenge() throws GameActionException {
@@ -403,6 +438,9 @@ public class ArchonBrain implements Brain {
 				break;
 			}
 		isScavenger = (startingLocs.length != 1 && archonIndex == startingLocs.length - 1);
+		turns = 0;
+		
+		buildRobot(RobotType.SOLDIER);
 	}
 
 	@Override

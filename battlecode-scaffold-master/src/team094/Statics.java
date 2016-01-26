@@ -19,11 +19,14 @@ public class Statics {
 		int length = 0;
 		for (MapLocation[] arr : arrs)
 			length += arr.length;
+		if (length == 0)
+			return new MapLocation[0];
 		int i = 0;
 		MapLocation[] all = new MapLocation[length];
 		for (MapLocation[] arr : arrs)
-			for (MapLocation loc : arr)
-				all[i++] = loc;
+			if (arr.length > 0)
+				for (MapLocation loc : arr)
+					all[i++] = loc;
 
 		return all;
 	}
@@ -32,11 +35,14 @@ public class Statics {
 		int length = 0;
 		for (RobotInfo[] arr : arrs)
 			length += arr.length;
+		if (length == 0)
+			return new RobotInfo[0];
 		int i = 0;
 		RobotInfo[] all = new RobotInfo[length];
 		for (RobotInfo[] arr : arrs)
-			for (RobotInfo loc : arr)
-				all[i++] = loc;
+			if (arr.length > 0)
+				for (RobotInfo loc : arr)
+					all[i++] = loc;
 
 		return all;
 	}
@@ -90,7 +96,7 @@ public class Statics {
 		RobotInfo closest = info[0];
 		int closestDist = Integer.MAX_VALUE;
 		for (int i = 1; i < info.length; i++) {
-			int dist = sqrDist(loc, info[i].location);
+			int dist = loc.distanceSquaredTo(info[i].location);
 			if (dist < closestDist && dist > minDist) {
 				closestDist = dist;
 				closest = info[i];
@@ -98,14 +104,14 @@ public class Statics {
 		}
 		return closest;
 	}
-	
+
 	public static MapLocation closestRobot(MapLocation loc, MapLocation[] info, int minDist) {
 		if (info.length == 0)
 			return null;
 		MapLocation closest = info[0];
 		int closestDist = Integer.MAX_VALUE;
 		for (int i = 1; i < info.length; i++) {
-			int dist = sqrDist(loc, info[i]);
+			int dist = loc.distanceSquaredTo(info[i]);
 			if (dist < closestDist && dist > minDist) {
 				closestDist = dist;
 				closest = info[i];
@@ -116,10 +122,6 @@ public class Statics {
 
 	public static RobotInfo closestRobot(MapLocation loc, RobotInfo[] info) {
 		return closestRobot(loc, info, 0);
-	}
-
-	public static int sqrDist(MapLocation loc1, MapLocation loc2) {
-		return (loc1.x - loc2.x) * (loc1.x - loc2.x) + (loc1.y - loc2.y) * (loc1.y - loc2.y);
 	}
 
 	public static MapLocation com(MapLocation[] locs) {
@@ -148,7 +150,9 @@ public class Statics {
 		MapLocation closest = null;
 		int dist = Integer.MAX_VALUE;
 		for (MapLocation l : list) {
-			int td = sqrDist(loc, l);
+			if (l == null)
+				continue;
+			int td = loc.distanceSquaredTo(l);
 			if (td < dist) {
 				dist = td;
 				closest = l;
@@ -167,16 +171,16 @@ public class Statics {
 		Direction toGoal;
 		Direction testDir;
 		toGoal = rc.getLocation().directionTo(goal);
-		for (int i : new int[] { 0, 1, -1}) {
-			testDir = directions[(toGoal.ordinal()+i)%8];
+		for (int i : new int[] { 0, 1, -1 }) {
+			testDir = directions[(toGoal.ordinal() + i) % 8];
 			if (rc.canMove(testDir)) {
 				rc.move(testDir);
 				return true;
 			}
 		}
 		if (rc.getType().canClearRubble()) {
-			for (int i : new int[] { 0, 1, -1}) {
-				testDir = directions[(toGoal.ordinal()+i)%8];
+			for (int i : new int[] { 0, 1, -1 }) {
+				testDir = directions[(toGoal.ordinal() + i) % 8];
 				if (rc.canMove(testDir)) {
 					rc.move(testDir);
 					return true;

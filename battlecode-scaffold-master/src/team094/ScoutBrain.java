@@ -89,9 +89,32 @@ public class ScoutBrain implements Brain {
 	public void senseEnemies() throws GameActionException {
 		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
 		for (RobotInfo r : enemies) {
-			messagesSent++; if (messagesSent < 20) rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY),
-					SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY),
+						SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
 		}
+	}
+
+	public void senseNeutral() throws GameActionException {
+		RobotInfo[] enemies = rc.senseNearbyRobots(-1, Team.NEUTRAL);
+		for (RobotInfo r : enemies) {
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.NEUTRALARCHON),
+						SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
+		}
+	}
+
+	public void senseParts() throws GameActionException {
+		MapLocation[] locs = rc.sensePartLocations(-1);
+		for (MapLocation loc : locs) {
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.PARTSCACHE),
+						SimpleEncoder.encodeLocation(loc), rc.getType().sensorRadiusSquared);
+		}
+
 	}
 
 	public void runTurn() throws GameActionException {
@@ -105,36 +128,38 @@ public class ScoutBrain implements Brain {
 		messagesSent = 0;
 	}
 
-	private void processSignals(RobotController rc) throws GameActionException {
-		Signal[] signals = rc.emptySignalQueue();
-		for (Signal s : signals) {
-			if (s.getTeam() == rc.getTeam() && s.getMessage() != null) {
-				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
-				switch (type) {
-				case CENTERHERE:
-					center = SimpleEncoder.decodeLocation(s.getMessage()[1]);
-					break;
-				case LEADERCHECK:
-					break;
-				case MOVETO:
-					break;
-				case NEUTRALARCHON:
-					break;
-				case RADIUS:
-					center = s.getLocation();
-					radius = s.getMessage()[1];
-					break;
-				case ZOMBIEDEN:
-					break;
-				case TURRETQUORUM:
-					messagesSent++; if (messagesSent < 20) rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
-					break;
-				default:
-					break;
-				}
-			}
-		}
-	}
+	// private void processSignals(RobotController rc) throws
+	// GameActionException {
+	// Signal[] signals = rc.emptySignalQueue();
+	// for (Signal s : signals) {
+	// if (s.getTeam() == rc.getTeam() && s.getMessage() != null) {
+	// MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
+	// switch (type) {
+	// case CENTERHERE:
+	// center = SimpleEncoder.decodeLocation(s.getMessage()[1]);
+	// break;
+	// case LEADERCHECK:
+	// break;
+	// case MOVETO:
+	// break;
+	// case NEUTRALARCHON:
+	// break;
+	// case RADIUS:
+	// center = s.getLocation();
+	// radius = s.getMessage()[1];
+	// break;
+	// case ZOMBIEDEN:
+	// break;
+	// case TURRETQUORUM:
+	// messagesSent++; if (messagesSent < 20)
+	// rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
+	// break;
+	// default:
+	// break;
+	// }
+	// }
+	// }
+	// }
 
 	public void move() throws GameActionException {
 		if (!rc.isCoreReady())
@@ -158,7 +183,9 @@ public class ScoutBrain implements Brain {
 	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
-			messagesSent++; if (messagesSent < 20) rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
 			// rc.setIndicatorString(0, "Broadcast queue: " +
 			// broadcastQueue.size());
 			messagesSent++;
