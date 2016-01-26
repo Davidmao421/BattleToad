@@ -176,7 +176,7 @@ public class ArchonBrain implements Brain {
 				setRoutine(Routine.CLUSTER);
 			}
 		} else {
-			if (lastLoc.distanceSquaredTo(rc.getLocation()) > 9) {
+			if (lastLoc.distanceSquaredTo(rc.getLocation()) > 2) {
 				setRoutine(Routine.GROUP);
 			} else {
 				setRoutine(Routine.CLUSTER);
