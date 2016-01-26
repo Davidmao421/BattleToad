@@ -105,7 +105,7 @@ public class ArchonBrain implements Brain {
 		return false;
 	}
 
-	private static boolean digNearby(RobotController rc) throws GameActionException {
+	private boolean digNearby(RobotController rc) throws GameActionException {
 		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
 			MapLocation loc = rc.getLocation().add(Statics.directions[(k + i + 8) % 8]);
@@ -181,7 +181,7 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void cluster() throws GameActionException {
-		circleOfHealing(rc);
+		circleOfHealing(rc);//healing has no core delay
 		if (isLeader) {// leader
 			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
 				if (buildRobot(RobotType.TURRET)) {
