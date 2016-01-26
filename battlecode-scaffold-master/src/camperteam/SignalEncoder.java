@@ -124,6 +124,7 @@ public class SignalEncoder {
 		return new Signal(l, 0, Team.NEUTRAL);
 	}
 
+	@SuppressWarnings(value = { "fallthrough" })
 	public static Signal encodePanic(MapLocation... locs) throws GameActionException {
 		int part1, part2 = part1 = 0;
 		MapLocation loc;
