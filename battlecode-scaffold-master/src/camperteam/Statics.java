@@ -191,7 +191,7 @@ public class Statics {
 		return false;
 	}
 
-	protected static void moveTo(Direction direction, RobotController rc) throws GameActionException {
+	public static void moveTo(Direction direction, RobotController rc) throws GameActionException {
 		try {
 			if (rc.isCoreReady()) {
 				for (int i : new int[] { 0, 1, -1, 2, -2 }) {

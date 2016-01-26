@@ -2,6 +2,7 @@ package camperteam;
 
 import java.util.*;
 import battlecode.common.*;
+import camperteam.SimpleEncoder.MessageType;
 
 public class ArchonBrain implements Brain {
 
@@ -19,14 +20,9 @@ public class ArchonBrain implements Brain {
 
 	private Map<Integer, RobotInfo> robots;
 
-	int panicRobot = -1;
-	int leader;
-	boolean isLeader;
-
-	private void setRoutine(Routine r) {
-		last = current;
-		current = r;
-	}
+	private int panicRobot = -1;
+	private int leader;
+	private boolean isLeader;
 
 	private boolean canBuild(RobotType type, Direction dir) {
 		RobotInfo[] robots = rc.senseNearbyRobots(1);
@@ -54,6 +50,7 @@ public class ArchonBrain implements Brain {
 		return false;
 	}
 
+<<<<<<< HEAD
 	private void initialize() throws GameActionException {
 		//lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		lastLoc = rc.getInitialArchonLocations(rc.getTeam())[0];
@@ -107,6 +104,8 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
+=======
+>>>>>>> origin/master
 	private void circleOfHealing(RobotController rc) throws GameActionException {
 		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
 		ArrayList<RobotInfo> targets = new ArrayList<RobotInfo>();
@@ -152,21 +151,22 @@ public class ArchonBrain implements Brain {
 		}
 	}
 
-	private static boolean hasSpace(RobotController rc) throws GameActionException {
-		for(Direction d: Statics.directions) {
+	private boolean hasSpace(RobotController rc) throws GameActionException {
+		for (Direction d : Statics.directions) {
 			MapLocation other = rc.getLocation().add(d);
-			if(rc.onTheMap(other)&&!rc.isLocationOccupied(other)&&rc.senseRubble(other)<GameConstants.RUBBLE_OBSTRUCTION_THRESH)
+			if (rc.onTheMap(other) && !rc.isLocationOccupied(other)
+					&& rc.senseRubble(other) < GameConstants.RUBBLE_OBSTRUCTION_THRESH)
 				return true;
 		}
 		return false;
 	}
-	
+
 	private static boolean digNearby(RobotController rc) throws GameActionException {
 		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
-			MapLocation loc = rc.getLocation().add(Statics.directions[(i + k) % 8]);
+			MapLocation loc = rc.getLocation().add(Statics.directions[(k + i + 8) % 8]);
 			if (rc.senseRubble(loc) > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
-				rc.clearRubble(Statics.directions[(i + k) % 8]);
+				rc.clearRubble(Statics.directions[i]);
 				return true;
 			}
 		}
@@ -174,25 +174,107 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void group() throws GameActionException {
-		if (isLeader) {
-			Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
-		} else {
-			if (rc.getLocation().equals(lastLoc)) {
-				for (int i = 0; i < 8; i++) {
-					Direction dir = Statics.directions[i];
-					if (rc.canMove(dir)) {
-						rc.move(dir);
-						return;
-					}
+		if (isLeader) {// leader
+			if (rc.getLocation().isAdjacentTo(lastLoc)) {
+				if (rc.senseRubble(lastLoc) > GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+					rc.clearRubble(rc.getLocation().directionTo(lastLoc));
+				} else {
+					Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
 				}
-				digNearby(rc);
 			} else {
 				Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
 			}
+		} else {// not leader
+			Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
 		}
 	}
 
-	Direction _moveDirection;
+	private void rahulCluster() throws GameActionException {
+
+		if (isLeader) {// leader
+			if (hasSpace(rc)) {
+				if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
+					if (buildRobot(RobotType.TURRET)) {
+					} else {
+						rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+					}
+				} /*
+					 * else if(rc.isCoreReady() &&
+					 * rc.hasBuildRequirements(RobotType.SCOUT)) {
+					 * //buildRobot(RobotType.SCOUT); }
+					 */
+			} else {
+				updateRadius(rc);
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}
+			if (rc.isCoreReady()) {
+				circleOfHealing(rc);
+				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+			}
+		} else {// not leader
+			circleOfHealing(rc);
+			if (!digNearby(rc)) {
+				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
+				if (com.distanceSquaredTo(lastLoc) > 2) {// adjust COM
+					Statics.moveTo(rc.getLocation().directionTo(com), rc);
+				}
+				if (!rc.isCoreReady()) {
+					return;
+				}
+				for (int i = 0; i < 8; i++) {// shuffle
+					Direction dir = Statics.directions[(i + 8) % 8];
+					MapLocation loc = rc.getLocation().add(dir);
+					if (rc.canMove(dir)) {
+						if (loc.distanceSquaredTo(lastLoc) <= 2) {
+							rc.move(dir);
+							return;
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	private void cluster() throws GameActionException {
+		circleOfHealing(rc);
+		if (isLeader) {// leader
+			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
+				if (buildRobot(RobotType.TURRET)) {
+				} else {
+					rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius,
+							BROADCAST_RANGE);
+				}
+			} else {
+				updateRadius(rc);
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius, BROADCAST_RANGE);
+			}
+			if (rc.isCoreReady()) {
+
+				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius, BROADCAST_RANGE);
+			}
+		} else {// not leader
+			if (rc.isCoreReady() && !digNearby(rc)) {
+				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
+				if (com.distanceSquaredTo(lastLoc) > 2) {// adjust COM
+					Statics.moveTo(rc.getLocation().directionTo(com), rc);
+				}
+				if (!rc.isCoreReady()) {
+					return;
+				}
+				for (int i = 0; i < 8; i++) {// shuffle
+					Direction dir = Statics.directions[(i + 8) % 8];
+					MapLocation loc = rc.getLocation().add(dir);
+					if (rc.canMove(dir)) {
+						if (loc.distanceSquaredTo(lastLoc) <= 2) {
+							rc.move(dir);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	private void determineRoutine() {
 		if (isLeader) {
@@ -202,7 +284,7 @@ public class ArchonBrain implements Brain {
 				setRoutine(Routine.CLUSTER);
 			}
 		} else {
-			if (lastLoc.distanceSquaredTo(rc.getLocation()) > 2) {
+			if (lastLoc.distanceSquaredTo(rc.getLocation()) > 9) {
 				setRoutine(Routine.GROUP);
 			} else {
 				setRoutine(Routine.CLUSTER);
@@ -211,21 +293,27 @@ public class ArchonBrain implements Brain {
 
 	}
 
+	private void setRoutine(Routine r) {
+		last = current;
+		current = r;
+	}
+
 	private void runTurn() throws GameActionException {
 		if (!rc.isCoreReady()) {
 			return;
 		}
-		if (rc.getRoundNum() == 1) {//select leader
+		if (rc.getRoundNum() == 1) {// select leader
 			Signal[] incoming = rc.emptySignalQueue();
-			rc.setIndicatorString(2, "" + incoming.length + " messages");
+			rc.setIndicatorString(3, "" + incoming.length + " messages");
 			rc.broadcastSignal(BROADCAST_RANGE * 30);
-			for (Signal s:incoming) {
-				if(s.getTeam()==rc.getTeam()) {
+			isLeader = true;
+			for (Signal s : incoming) {
+				if (s.getTeam() == rc.getTeam()) {
 					isLeader = false;
 					break;
 				}
 			}
-			isLeader = true;
+
 		}
 		determineRoutine();
 		switch (current) {
@@ -257,10 +345,16 @@ public class ArchonBrain implements Brain {
 		default:
 			s = "fuck";
 			break;
-
 		}
 		rc.setIndicatorString(1, s);
-		// System.out.println(s);
+		rc.setIndicatorString(2, "leader" + isLeader);
+	}
+
+	private void initialize() throws GameActionException {
+		lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
+		current = Routine.GROUP;
+		robots = new TreeMap<Integer, RobotInfo>();
+		radius = 2;
 	}
 
 	@Override
