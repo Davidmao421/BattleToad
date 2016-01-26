@@ -14,15 +14,6 @@ public class TurretBrain implements Brain {
 	private MapLocation attackLoc;
 	private ArrayList<MapLocation> targets;
 
-	private void initialize(RobotController rc) {
-		timer = 0;
-		previousHealth = rc.getHealth();
-		radius = 5;
-		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
-		targets = new ArrayList<MapLocation>();
-		rc.setIndicatorDot(center, 128, 128, 128);
-	}
-
 	private void attack(RobotController rc, MapLocation hostile) throws GameActionException {
 		if (rc.getType() == RobotType.TTM)
 			rc.unpack();
@@ -130,15 +121,18 @@ public class TurretBrain implements Brain {
 
 	private void processSignals(RobotController rc) throws GameActionException {
 		Signal[] signals = rc.emptySignalQueue();
-
 		for (Signal s : signals) {
 			if (s.getTeam() == rc.getTeam()) {
 				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
 				switch (type) {
-				case ATTACK:
-					attackLoc = SimpleEncoder.decodeLocation(s.getMessage()[1]);
+				case ENEMY:
+					MapLocation enemyLoc = SimpleEncoder.decodeLocation(s.getMessage()[1]);
+					if (!targets.contains(enemyLoc)) {
+						targets.add(enemyLoc);
+					}
 					break;
 				case CENTERHERE:
+					center = SimpleEncoder.decodeLocation(s.getMessage()[1]);
 					break;
 				case LEADERCHECK:
 					break;
@@ -152,6 +146,9 @@ public class TurretBrain implements Brain {
 					break;
 				case ZOMBIEDEN:
 					break;
+				case TURRETQUORUM:
+					rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
+					break;
 				default:
 					break;
 				}
@@ -159,23 +156,11 @@ public class TurretBrain implements Brain {
 		}
 	}
 
-	public void rahulRunTurn(RobotController rc) throws GameActionException {
+	public void runTurn(RobotController rc) throws GameActionException {
+		processSignals(rc);
 		rc.setIndicatorString(1, "" + radius + ":Radius");
-		Signal[] signals = rc.emptySignalQueue();
 		targets.clear();
-		for (Signal s : signals) {
-			if (s.getTeam() == rc.getTeam()) {
-				center = s.getLocation();
-				radius = s.getMessage()[0];
-			} else if (SignalEncoder.getPacketType(s) == PacketType.ATTACK_ENEMY) {
-				Signal r = SignalEncoder.decodeAttackEnemy(s);
-				MapLocation enemyLoc = r.getLocation();
-				if (!targets.contains(enemyLoc)) {
-					targets.add(enemyLoc);
-				}
-			}
 
-		}
 		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
 		if (shouldMoveIn || shouldMoveOut) {
 			if (!enemiesInSight(rc)) {
@@ -196,9 +181,10 @@ public class TurretBrain implements Brain {
 				rc.unpack();
 			}
 		}
+		attackNearby(rc);
 	}
 
-	private void runTurn(RobotController rc) throws GameActionException {
+	private void oldRunTurn(RobotController rc) throws GameActionException {
 		rc.setIndicatorString(1, "" + radius + ":Radius");
 		processSignals(rc);
 
@@ -222,6 +208,15 @@ public class TurretBrain implements Brain {
 	public boolean validLocation(RobotController rc, MapLocation loc) throws GameActionException {
 		return (loc.x + loc.y) % 2 == 0 && rc.senseRobotAtLocation(loc) != null
 				&& rc.senseRubble(loc) < GameConstants.RUBBLE_OBSTRUCTION_THRESH;
+	}
+
+	private void initialize(RobotController rc) throws GameActionException {
+		timer = 0;
+		previousHealth = rc.getHealth();
+		radius = 8;
+		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
+		targets = new ArrayList<MapLocation>();
+		rc.pack();
 	}
 
 	public void run(RobotController rc) {

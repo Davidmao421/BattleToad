@@ -82,7 +82,7 @@ public class ScoutBrain implements Brain {
 	public void senseEnemies() throws GameActionException {
 		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
 		for(RobotInfo r: enemies) {
-			Signal message = SignalEncoder.encodeAttackEnemy(0, r.location);
+			Signal message = new Signal(enemyCom, SimpleEncoder.encodeType(SimpleEncoder.MessageType.ENEMY),null, SimpleEncoder.encodeLocation(r.location), 0);
 			rc.broadcastMessageSignal(message.getMessage()[0], message.getMessage()[1], rc.getType().sensorRadiusSquared);
 		}
 	}
