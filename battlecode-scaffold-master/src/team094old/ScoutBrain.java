@@ -16,26 +16,12 @@ public class ScoutBrain implements Brain {
 	RobotController rc;
 	boolean radiate;
 
-	boolean rotatesLeft, rotatesRight;
-
 	public void initialize() {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
 		sentSignals = new HashSet<>();
 		radiate = true;
-
-		int dist = rc.getLocation().distanceSquaredTo(teamCom);
-		for (MapLocation loc : rc.getInitialArchonLocations(rc.getTeam())) {
-			if (loc.distanceSquaredTo(teamCom) - dist < 1) {
-				if (rotatesLeft) {
-					rotatesRight = rotatesLeft;
-					continue;
-				}
-				rotatesLeft = !rotatesLeft;
-			}
-		}
-		
 	}
 
 	public void addBroadcast(Signal s) {
@@ -45,22 +31,23 @@ public class ScoutBrain implements Brain {
 	}
 
 	public void radiate() throws GameActionException {
-		Direction d = teamCom.directionTo(enemyCom);
-//		if (rotatesLeft)
-//			d = d.rotateLeft();
-//		if (rotatesRight)
-//			d = d.rotateRight();
-
+		Direction d = teamCom.directionTo(rc.getLocation());
 		MapLocation currentLoc = rc.getLocation();
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		for (RobotInfo r : robots) {
-			if ((r.team == rc.getTeam().opponent()) && (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
-					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared)) {
+			if (currentLoc.distanceSquaredTo(r.location) <= r.type.attackRadiusSquared
+					|| currentLoc.add(d).distanceSquaredTo(r.location) <= r.type.attackRadiusSquared) {
 				radiate = false;
 				return;
 			}
 		}
-		radiate = Statics.moveTo(d, rc);
+		if (radiate == true) {
+			if (rc.canMove(d))
+				Statics.moveTo(d, rc);
+			else {
+				radiate = false;
+			}
+		}
 	}
 
 	public void senseBroadcast() {
@@ -79,45 +66,50 @@ public class ScoutBrain implements Brain {
 		for (RobotInfo info : robots) {
 			if (info.team == rc.getTeam())
 				continue;
-			if (info.type == RobotType.ARCHON || info.type == RobotType.TURRET || info.type == RobotType.ZOMBIEDEN || rc.getType().sensorRadiusSquared < info.type.attackRadiusSquared) {
-				Signal s = SignalEncoder.encodeAttackEnemy(info.ID, info.location);
-				
-				addBroadcast(s);
-			
+			if (rc.getTeam().opponent() == info.team
+					&& (info.type == RobotType.ZOMBIEDEN || info.type == RobotType.ARCHON)) {
+				// addBroadcast(SignalEncoder.encodeRobot(info.type, info.ID,
+				// info.location, rc.getLocation()));
 			}
 
 			if (info.team == Team.NEUTRAL) {
-				Signal s = SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location);
-				addBroadcast(s);
+				addBroadcast(SignalEncoder.encodeNeutralRobot(info.type, info.ID, info.location));
 			}
 		}
 
 	}
+	
+	public void senseEnemies() throws GameActionException {
+		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
+		for(RobotInfo r: enemies) {
+			Signal message = SignalEncoder.encodeAttackEnemy(0, r.location);
+			rc.broadcastMessageSignal(message.getMessage()[0], message.getMessage()[1], rc.getType().sensorRadiusSquared);
+		}
+	}
 
 	public void runTurn() throws GameActionException {
-		senseBroadcast();
+		/*senseBroadcast();
 		if (broadcast())
 			return;
 		rc.setIndicatorString(0, "Radiate: " + radiate);
-		if (radiate) {
+		if (radiate == true) {
 			radiate(); // TODO: working movement
-		} 
-		if (!radiate) {
+		} else if (radiate == false) {
 			move();
-		}
-
+		}*/
+		senseEnemies();
 	}
 
 	public void move() throws GameActionException {
 		RobotInfo[] robots = rc.senseNearbyRobots();
+		Direction d = teamCom.directionTo(rc.getLocation());
 		Direction[] directions = Statics.directions;
 		MapLocation currentLoc = rc.getLocation();
 		MapLocation bigThreat = null;
 		double damage = 0;
 		if (robots.length != 0) {
 			for (RobotInfo r : robots) {
-				if (currentLoc.distanceSquaredTo(r.location) <= Math.pow((Math.sqrt(r.type.attackRadiusSquared) + 1),
-						2)) {
+				if (currentLoc.distanceSquaredTo(r.location) <= Math.pow((Math.sqrt(r.type.attackRadiusSquared) + 1),2)) {
 					if (bigThreat == null) {
 						bigThreat = r.location;
 						damage = r.type.attackPower;
@@ -133,9 +125,9 @@ public class ScoutBrain implements Brain {
 		if ((bigThreat != null)) {
 			Statics.moveTo(bigThreat.directionTo(rc.getLocation()), rc);
 		} else {
-			int k = (int) (Math.random() * 8);
+			int k =(int)(Math.random()*8);
 			for (int i = 0; i < 8; i++) {
-				Direction dir = directions[(i + k) % 8];
+				Direction dir = directions[(i + k)%8];
 				boolean shouldMove = true;
 				for (RobotInfo r : robots) {
 					if (currentLoc.add(dir).distanceSquaredTo(r.location) <= Math
@@ -149,15 +141,16 @@ public class ScoutBrain implements Brain {
 				}
 			}
 		}
+
 	}
 
 	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
 			// rc.setIndicatorString(0, "Broadcast queue: " +
 			// broadcastQueue.size());
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 3600);
-			
+			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600);
 			sentSignals.add(s);
 			broadcast();
 			return true;

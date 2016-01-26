@@ -1,4 +1,4 @@
-package team094old;
+package team094;
 
 import team094old.PacketType;
 

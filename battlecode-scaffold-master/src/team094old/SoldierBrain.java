@@ -34,26 +34,33 @@ public class SoldierBrain implements Brain {
 	}
 
 	public static boolean attack(RobotController rc) throws GameActionException {
-		RobotInfo[] hostiles = rc.senseHostileRobots(rc.getLocation(), -1);
-		RobotInfo target = CompareStuff.moveAwayFrom(hostiles, rc.getLocation());
-		return target == null ? false : attack(rc, target.location);
-	}
-
-	public static boolean attack(RobotController rc, MapLocation target) throws GameActionException {
-		if (!rc.isCoreReady() || !rc.isWeaponReady())
-			return false;
-		if (rc.canAttackLocation(target)) {
-			rc.attackLocation(target);
-			return true;
+		int myAttackRange = rc.getType().attackRadiusSquared;
+		if (rc.getType().canAttack() && myAttackRange > 0) {
+			RobotInfo[] enemiesWithinRange = rc.senseNearbyRobots(myAttackRange, rc.getTeam().opponent());
+			RobotInfo[] zombiesWithinRange = rc.senseNearbyRobots(myAttackRange, Team.ZOMBIE);
+			RobotInfo away = CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation());
+			if (away != null) {
+				if (rc.isCoreReady() && rc.canMove(away.location.directionTo(rc.getLocation())))
+					Statics.moveTo(CompareStuff.moveAwayFrom(zombiesWithinRange, rc.getLocation()).location
+							.directionTo(rc.getLocation()), rc); // TODO:
+			} else {
+				RobotInfo target = CompareStuff.soldierCompare(enemiesWithinRange, zombiesWithinRange);
+				if (target != null) {
+					if (rc.isWeaponReady()) {
+						rc.attackLocation(target.location);
+					}
+					return true;
+				}
+			}
 		}
-		return Statics.moveTo(rc.getLocation().directionTo(target), rc);
+		return false;
 	}
 
 	public static void move(RobotController rc) throws GameActionException {
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		ArrayList<MapLocation> arcLoc = new ArrayList<MapLocation>();
 		for (RobotInfo r : nearby) {
-			if (r.team == rc.getTeam() && r.type == RobotType.ARCHON) {
+			if (r.type.equals(RobotType.ARCHON)) {
 				arcLoc.add(r.location);
 			}
 		}
@@ -72,7 +79,7 @@ public class SoldierBrain implements Brain {
 			if (shortestDistance < 4) {
 				Statics.moveTo(dir, rc);
 			} else if (shortestDistance >= 9) {
-				boolean t = Statics.moveTo(dir.opposite(), rc);
+				Statics.moveTo(dir.opposite(), rc);
 			} else {
 				if (digToWin(rc)) {
 					return;
@@ -124,8 +131,9 @@ public class SoldierBrain implements Brain {
 		int k = (int) (Math.random() * 8);
 		for (int i = 0; i < 8; i++) {
 			MapLocation loc = rc.getLocation().add(Statics.directions[(i + k) % 8]);
-			if (rc.senseRubble(loc) > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
-				rc.clearRubble(Statics.directions[(i+k)%8]);
+			if (rc.senseRubble(loc)
+					 > GameConstants.RUBBLE_SLOW_THRESH && rc.onTheMap(loc)) {
+				rc.clearRubble(Statics.directions[i]);
 				return true;
 			}
 		}
@@ -135,10 +143,10 @@ public class SoldierBrain implements Brain {
 	private static boolean digToWin(RobotController rc) throws GameActionException {
 		MapLocation[] parts = rc.sensePartLocations(-1);
 		RobotInfo[] neutrals = rc.senseNearbyRobots(-1, Team.NEUTRAL);
-
-		if (neutrals.length != 0) {
+		
+		if (neutrals.length!=0) {
 			MapLocation[] locs = new MapLocation[neutrals.length];
-			for (int i = 0; i < neutrals.length; i++) {
+			for(int i = 0; i < neutrals.length; i++) {
 				locs[i] = neutrals[i].location;
 			}
 			MapLocation loc = Statics.closestLoc(rc.getLocation(), locs);
@@ -176,10 +184,6 @@ public class SoldierBrain implements Brain {
 		Signal[] received = rc.emptySignalQueue();
 
 		for (Signal s : received) {
-			if (s.getMessage() == null){
-				//What should we do with basic packets?
-				continue;
-			}
 			switch (SignalEncoder.getPacketType(s)) {
 			case ATTACK_ENEMY:
 				if (priority < 2)
@@ -231,12 +235,13 @@ public class SoldierBrain implements Brain {
 	}
 
 	public static void runTurn(RobotController rc) throws GameActionException {
-		processSignals(rc);
 		if (target != null && priority > 2) {
-			attack(rc, target);
-		} else if (!attack(rc) && rc.isCoreReady()) {
+
+		}
+		if (!attack(rc) && rc.isCoreReady()) {
 			move(rc);
 		}
+
 	}
 
 }
