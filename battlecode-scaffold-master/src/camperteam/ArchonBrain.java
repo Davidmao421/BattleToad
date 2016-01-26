@@ -69,7 +69,7 @@ public class ArchonBrain implements Brain {
 				if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
 					if (buildRobot(RobotType.TURRET)) {
 						} else {
-							rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+							rc.broadcastMessageSignal((int) radius, 500, BROADCAST_RANGE);
 						}			
 				} /*else if(rc.isCoreReady() && rc.hasBuildRequirements(RobotType.SCOUT)) {
 				//buildRobot(RobotType.SCOUT);
@@ -77,11 +77,11 @@ public class ArchonBrain implements Brain {
 			}
 			else {
 				updateRadius(rc);
-				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+				rc.broadcastMessageSignal((int) radius, 500, BROADCAST_RANGE);
 			}
 			if (rc.isCoreReady()) {
 				circleOfHealing(rc);
-				rc.broadcastMessageSignal((int) radius, 0, BROADCAST_RANGE);
+				rc.broadcastMessageSignal((int) radius, 500, BROADCAST_RANGE);
 			}		
 		} else {// not leader
 			circleOfHealing(rc);

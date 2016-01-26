@@ -85,7 +85,7 @@ public class TurretBrain implements Brain {
 		Signal[] signals = rc.emptySignalQueue();
 		targets.clear();
 		for (Signal s : signals) {
-			if (s.getTeam() == rc.getTeam()) {
+			if (s.getTeam() == rc.getTeam() && s.getMessage()[1]==500) {
 				center = s.getLocation();
 				radius = s.getMessage()[0];
 			}
