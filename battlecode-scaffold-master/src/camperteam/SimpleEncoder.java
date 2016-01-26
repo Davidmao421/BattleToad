@@ -4,7 +4,7 @@ import battlecode.common.MapLocation;
 
 public class SimpleEncoder {
 	public static enum MessageType {
-		ATTACK, RADIUS, MOVETO, CENTERHERE, LEADERCHECK, ZOMBIEDEN, NEUTRALARCHON;
+		ENEMY, RADIUS, MOVETO, CENTERHERE, LEADERCHECK, ZOMBIEDEN, NEUTRALARCHON, TURRETQUORUM, ARCHONQUORUM;
 		private static final MessageType[] values = values();
 	};
 

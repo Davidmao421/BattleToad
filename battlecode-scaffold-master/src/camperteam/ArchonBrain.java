@@ -16,12 +16,12 @@ public class ArchonBrain implements Brain {
 	private RobotController rc;
 	private MapLocation lastLoc;
 	private double radius;
+	private int radiusInc;
+	private boolean space;
 	// private List<MapLocation> knownEnemyArchons;
 
 	private Map<Integer, RobotInfo> robots;
 
-	private int panicRobot = -1;
-	private int leader;
 	private boolean isLeader;
 
 	private boolean canBuild(RobotType type, Direction dir) {
@@ -50,11 +50,11 @@ public class ArchonBrain implements Brain {
 		return false;
 	}
 
-	private void circleOfHealing(RobotController rc) throws GameActionException {
+	private boolean circleOfHealing(RobotController rc) throws GameActionException {
 		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
 		ArrayList<RobotInfo> targets = new ArrayList<RobotInfo>();
 		for (RobotInfo r : friends) {
-			if (r.type == RobotType.TURRET || r.type == RobotType.TTM) {
+			if (r.type != RobotType.ARCHON) {
 				if (r.location.distanceSquaredTo(rc.getLocation()) <= rc.getType().attackRadiusSquared) {
 					if (r.health < r.maxHealth) {
 						targets.add(r);
@@ -71,38 +71,35 @@ public class ArchonBrain implements Brain {
 				}
 			}
 			rc.repair(triage.location);
+			return true;
 		}
+		return false;
 	}
 
-	private void updateRadius(RobotController rc) {
-		RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
-		int tCount = 0;
-		int ttmCount = 0;
-		int aCount = 0;
-		for (RobotInfo r : friends) {
-			if (r.type == RobotType.TURRET) {
-				tCount++;
-			} else if (r.type == RobotType.TTM) {
-				ttmCount++;
-			} else if (r.type == RobotType.ARCHON) {
-				aCount++;
-			}
-		}
-		if (aCount == 0) {
-			radius = 2d + tCount + ttmCount;
-		} else {
-			radius = 4d + tCount + ttmCount;
-		}
+	private void sendRadiusSignal(RobotController rc) throws GameActionException {
+		rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius, BROADCAST_RANGE);
+	}
+
+	private void increaseRadius(RobotController rc) throws GameActionException {
+		radius += radiusInc;
+		radiusInc += 2;
+		sendRadiusSignal(rc);
 	}
 
 	private boolean hasSpace(RobotController rc) throws GameActionException {
 		for (Direction d : Statics.directions) {
 			MapLocation other = rc.getLocation().add(d);
-			if (rc.onTheMap(other) && !rc.isLocationOccupied(other)
-					&& rc.senseRubble(other) < GameConstants.RUBBLE_OBSTRUCTION_THRESH)
-				return true;
+			if (rc.onTheMap(other) && rc.senseRubble(other) < GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+				if (rc.senseRobotAtLocation(other) != null && rc.senseRobotAtLocation(other).type == RobotType.TTM) {
+					return true;
+				}
+				if (!rc.isLocationOccupied(other)) {
+					return true;
+				}
+			}
 		}
 		return false;
+
 	}
 
 	private boolean digNearby(RobotController rc) throws GameActionException {
@@ -134,28 +131,26 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void cluster() throws GameActionException {
-		circleOfHealing(rc);// healing has no core delay
+		circleOfHealing(rc);
 		if (isLeader) {// leader
-			if (rc.isCoreReady() && rc.hasBuildRequirements(RobotType.TURRET)) {
-				if (buildRobot(RobotType.TURRET)) {
-				} else {
-					rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius,
-							BROADCAST_RANGE);
-				}
-			} else {
-				updateRadius(rc);
-				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius, BROADCAST_RANGE);
-			}
 			if (rc.isCoreReady()) {
-
-				rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.RADIUS), (int) radius, BROADCAST_RANGE);
+				if (rc.hasBuildRequirements(RobotType.TURRET)) {
+					if (hasSpace(rc)) {
+						space = true;
+						buildRobot(RobotType.TURRET);
+						sendRadiusSignal(rc);
+					} else {
+						if (space) {
+							increaseRadius(rc);
+							space = false;
+						}
+					}
+				} else {
+					//sendRadiusSignal(rc);
+				}
 			}
 		} else {// not leader
 			if (rc.isCoreReady() && !digNearby(rc)) {
-				MapLocation com = Statics.com(rc.senseNearbyRobots(-1, rc.getTeam()));
-				if (com.distanceSquaredTo(lastLoc) > 2) {// adjust COM
-					Statics.moveTo(rc.getLocation().directionTo(com), rc);
-				}
 				if (!rc.isCoreReady()) {
 					return;
 				}
@@ -251,7 +246,9 @@ public class ArchonBrain implements Brain {
 		lastLoc = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		current = Routine.GROUP;
 		robots = new TreeMap<Integer, RobotInfo>();
-		radius = 2;
+		radius = 8;
+		radiusInc = 7;
+		space = true;
 	}
 
 	@Override
