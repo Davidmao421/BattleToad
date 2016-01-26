@@ -109,12 +109,14 @@ public class TurretBrain implements Brain {
 
 	private void forward(RobotController rc) throws GameActionException {
 		if (rc.isCoreReady()) {
-			
+			Statics.moveTo(rc.getLocation().directionTo(center).opposite(), rc);
 		}
 	}
 
 	private void reverse(RobotController rc) throws GameActionException {
-
+		if (rc.isCoreReady()) {
+			Statics.moveTo(rc.getLocation().directionTo(center), rc);
+		}
 	}
 
 	private void processSignals(RobotController rc) throws GameActionException {
@@ -158,7 +160,7 @@ public class TurretBrain implements Brain {
 		processSignals(rc);
 		rc.setIndicatorString(1, "" + radius + ":Radius");
 		targets.clear();
-		
+
 		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
 		if (shouldMoveIn || shouldMoveOut) {
 			if (!enemiesInSight(rc)) {
@@ -169,16 +171,17 @@ public class TurretBrain implements Brain {
 			}
 		}
 		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if (enemiesInSight(rc)) {
+			if (timer == 0 || enemiesInSight(rc)) {
 				rc.unpack();
 			} else if (shouldMoveOut) {
 				forward(rc);
 			} else if (shouldMoveIn) {
 				reverse(rc);
-			} else {
-				shuffle(rc);
+			} else if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
+				rc.unpack();
 			}
 		}
+		attackNearby(rc);
 	}
 
 	private void oldRunTurn(RobotController rc) throws GameActionException {
