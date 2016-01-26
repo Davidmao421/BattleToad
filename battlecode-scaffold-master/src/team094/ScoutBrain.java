@@ -20,8 +20,10 @@ public class ScoutBrain implements Brain {
 	private MapLocation center;
 
 	private int radius;
+	int messagesSent;
 
 	public void initialize() {
+		messagesSent = 0;
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
 		broadcastQueue = new LinkedList<>();
@@ -83,26 +85,24 @@ public class ScoutBrain implements Brain {
 		}
 
 	}
-	
+
 	public void senseEnemies() throws GameActionException {
 		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
-		for(RobotInfo r: enemies) {
-			rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY), SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
+		for (RobotInfo r : enemies) {
+			messagesSent++; if (messagesSent < 20) rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY),
+					SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
 		}
 	}
 
 	public void runTurn() throws GameActionException {
-		/*senseBroadcast();
-		if (broadcast())
-			return;
-		rc.setIndicatorString(0, "Radiate: " + radiate);
-		if (radiate == true) {
-			radiate(); // TODO: working movement
-		} else if (radiate == false) {
-			move();
-		}*/
+		/*
+		 * senseBroadcast(); if (broadcast()) return; rc.setIndicatorString(0,
+		 * "Radiate: " + radiate); if (radiate == true) { radiate(); // TODO:
+		 * working movement } else if (radiate == false) { move(); }
+		 */
 		move();
 		senseEnemies();
+		messagesSent = 0;
 	}
 
 	private void processSignals(RobotController rc) throws GameActionException {
@@ -127,7 +127,7 @@ public class ScoutBrain implements Brain {
 				case ZOMBIEDEN:
 					break;
 				case TURRETQUORUM:
-					rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
+					messagesSent++; if (messagesSent < 20) rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
 					break;
 				default:
 					break;
@@ -137,19 +137,20 @@ public class ScoutBrain implements Brain {
 	}
 
 	public void move() throws GameActionException {
-		if (!rc.isCoreReady()) return;
-		
+		if (!rc.isCoreReady())
+			return;
+
 		MapLocation startingArchon = rc.getInitialArchonLocations(rc.getTeam())[0];
 		int dist = rc.getLocation().distanceSquaredTo(startingArchon);
-		if (dist > radius+40){
+		if (dist > radius + 40) {
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon), rc);
 			return;
 		}
-		if (dist < radius){
+		if (dist < radius) {
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
 			return;
 		}
-		
+
 		Statics.moveTo(rc.getLocation().directionTo(startingArchon).rotateLeft().rotateLeft(), rc);
 
 	}
@@ -157,10 +158,12 @@ public class ScoutBrain implements Brain {
 	public boolean broadcast() throws GameActionException {
 		if (rc.isCoreReady() && !broadcastQueue.isEmpty()) {
 			Signal s = broadcastQueue.remove();
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
+			messagesSent++; if (messagesSent < 20) rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600); // TODO:
 			// rc.setIndicatorString(0, "Broadcast queue: " +
 			// broadcastQueue.size());
-			rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600);
+			messagesSent++;
+			if (messagesSent < 20)
+				rc.broadcastMessageSignal(s.getMessage()[0], s.getMessage()[1], 1600);
 			sentSignals.add(s);
 			broadcast();
 			return true;
