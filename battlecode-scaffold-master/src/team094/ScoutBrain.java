@@ -101,46 +101,20 @@ public class ScoutBrain implements Brain {
 	}
 
 	public void move() throws GameActionException {
-		RobotInfo[] robots = rc.senseNearbyRobots();
-		Direction d = teamCom.directionTo(rc.getLocation());
-		Direction[] directions = Statics.directions;
-		MapLocation currentLoc = rc.getLocation();
-		MapLocation bigThreat = null;
-		double damage = 0;
-		if (robots.length != 0) {
-			for (RobotInfo r : robots) {
-				if (currentLoc.distanceSquaredTo(r.location) <= Math.pow((Math.sqrt(r.type.attackRadiusSquared) + 1),2)) {
-					if (bigThreat == null) {
-						bigThreat = r.location;
-						damage = r.type.attackPower;
-					} else {
-						if (damage < r.type.attackPower) {
-							bigThreat = r.location;
-							damage = r.type.attackPower;
-						}
-					}
-				}
-			}
+		if (!rc.isCoreReady()) return;
+		
+		MapLocation startingArchon = rc.getInitialArchonLocations(rc.getTeam())[0];
+		int dist = rc.getLocation().distanceSquaredTo(startingArchon);
+		if (dist > 64){
+			Statics.moveTo(rc.getLocation().directionTo(startingArchon), rc);
+			return;
 		}
-		if ((bigThreat != null)) {
-			Statics.moveTo(bigThreat.directionTo(rc.getLocation()), rc);
-		} else {
-			int k =(int)(Math.random()*8);
-			for (int i = 0; i < 8; i++) {
-				Direction dir = directions[(i + k)%8];
-				boolean shouldMove = true;
-				for (RobotInfo r : robots) {
-					if (currentLoc.add(dir).distanceSquaredTo(r.location) <= Math
-							.pow((Math.sqrt(r.type.attackRadiusSquared) + 1), 2)) {
-						shouldMove = false;
-					}
-					if (shouldMove == true && rc.canMove(dir) && rc.isCoreReady()) {
-						rc.move(dir);
-						return;
-					}
-				}
-			}
+		if (dist < 25){
+			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
+			return;
 		}
+		
+		Statics.moveTo(rc.getLocation().directionTo(startingArchon).rotateLeft().rotateLeft(), rc);
 
 	}
 
