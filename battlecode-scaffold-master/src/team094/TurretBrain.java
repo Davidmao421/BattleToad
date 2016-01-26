@@ -33,7 +33,7 @@ public class TurretBrain implements Brain {
 		RobotInfo[] hostiles = rc.senseHostileRobots(rc.getLocation(), -1);
 		RobotInfo target = Statics.closestRobot(rc.getLocation(), hostiles, GameConstants.TURRET_MINIMUM_RANGE);
 		// This if statement will need to get much more difficult
-		if (target != null && rc.isCoreReady() && rc.isWeaponReady()) {
+		if (target != null) {
 			attack(rc, target);
 			return true;
 		} else {
@@ -122,7 +122,7 @@ public class TurretBrain implements Brain {
 	private void processSignals(RobotController rc) throws GameActionException {
 		Signal[] signals = rc.emptySignalQueue();
 		for (Signal s : signals) {
-			if (s.getTeam() == rc.getTeam()) {
+			if (s.getTeam() == rc.getTeam() && s.getMessage() != null) {
 				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
 				switch (type) {
 				case ENEMY:

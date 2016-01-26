@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import battlecode.common.*;
+import team094.SimpleEncoder.MessageType;
 
 public class ScoutBrain implements Brain {
 	MapLocation enemyCom, teamCom;
@@ -15,6 +16,10 @@ public class ScoutBrain implements Brain {
 	Set<Signal> sentSignals;
 	RobotController rc;
 	boolean radiate;
+
+	private MapLocation center;
+
+	private int radius;
 
 	public void initialize() {
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
@@ -82,8 +87,7 @@ public class ScoutBrain implements Brain {
 	public void senseEnemies() throws GameActionException {
 		RobotInfo[] enemies = rc.senseHostileRobots(rc.getLocation(), -1);
 		for(RobotInfo r: enemies) {
-			Signal message = new Signal(enemyCom, SimpleEncoder.encodeType(SimpleEncoder.MessageType.ENEMY),null, SimpleEncoder.encodeLocation(r.location), 0);
-			rc.broadcastMessageSignal(message.getMessage()[0], message.getMessage()[1], rc.getType().sensorRadiusSquared);
+			rc.broadcastMessageSignal(SimpleEncoder.encodeType(MessageType.ENEMY), SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
 		}
 	}
 
@@ -97,7 +101,39 @@ public class ScoutBrain implements Brain {
 		} else if (radiate == false) {
 			move();
 		}*/
+		move();
 		senseEnemies();
+	}
+
+	private void processSignals(RobotController rc) throws GameActionException {
+		Signal[] signals = rc.emptySignalQueue();
+		for (Signal s : signals) {
+			if (s.getTeam() == rc.getTeam() && s.getMessage() != null) {
+				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
+				switch (type) {
+				case CENTERHERE:
+					center = SimpleEncoder.decodeLocation(s.getMessage()[1]);
+					break;
+				case LEADERCHECK:
+					break;
+				case MOVETO:
+					break;
+				case NEUTRALARCHON:
+					break;
+				case RADIUS:
+					center = s.getLocation();
+					radius = s.getMessage()[1];
+					break;
+				case ZOMBIEDEN:
+					break;
+				case TURRETQUORUM:
+					rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
+					break;
+				default:
+					break;
+				}
+			}
+		}
 	}
 
 	public void move() throws GameActionException {
@@ -105,11 +141,11 @@ public class ScoutBrain implements Brain {
 		
 		MapLocation startingArchon = rc.getInitialArchonLocations(rc.getTeam())[0];
 		int dist = rc.getLocation().distanceSquaredTo(startingArchon);
-		if (dist > 64){
+		if (dist > radius+40){
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon), rc);
 			return;
 		}
-		if (dist < 25){
+		if (dist < radius){
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
 			return;
 		}
