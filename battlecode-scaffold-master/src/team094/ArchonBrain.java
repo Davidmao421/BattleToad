@@ -149,6 +149,7 @@ public class ArchonBrain implements Brain {
 						SimpleEncoder.encodeLocation(r.location), rc.getType().sensorRadiusSquared);
 		}
 	}
+
 	int messagesSent;
 	private void scavenger() throws GameActionException {
 		messagesSent=0;
@@ -320,7 +321,6 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void cluster() throws GameActionException {
-		circleOfHealing(rc);
 		if (isLeader) {// leader
 			if (rc.isCoreReady()) {
 				if (turns%150==0){
@@ -397,6 +397,7 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn() throws GameActionException {
+		circleOfHealing(rc);
 		if (!rc.isCoreReady()) {
 			return;
 		}

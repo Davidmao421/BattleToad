@@ -16,7 +16,7 @@ public class ScoutBrain implements Brain {
 	Set<Signal> sentSignals;
 	RobotController rc;
 	boolean radiate;
-
+	boolean clockWise;
 	private MapLocation center;
 
 	private int radius;
@@ -29,6 +29,7 @@ public class ScoutBrain implements Brain {
 		broadcastQueue = new LinkedList<>();
 		sentSignals = new HashSet<>();
 		radiate = true;
+		radius = 8;
 	}
 
 	public void addBroadcast(Signal s) {
@@ -123,7 +124,8 @@ public class ScoutBrain implements Brain {
 		 * "Radiate: " + radiate); if (radiate == true) { radiate(); // TODO:
 		 * working movement } else if (radiate == false) { move(); }
 		 */
-		move();
+		processSignals(rc);
+		move(true);
 		senseEnemies();
 		messagesSent = 0;
 	}
@@ -161,7 +163,7 @@ public class ScoutBrain implements Brain {
 	// }
 	// }
 
-	public void move() throws GameActionException {
+	public void move(boolean noRecur) throws GameActionException {
 		if (!rc.isCoreReady())
 			return;
 
@@ -175,9 +177,20 @@ public class ScoutBrain implements Brain {
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
 			return;
 		}
-
-		Statics.moveTo(rc.getLocation().directionTo(startingArchon).rotateLeft().rotateLeft(), rc);
-
+		Direction dir = rc.getLocation().directionTo(startingArchon);
+		if (clockWise) {
+			dir = dir.rotateLeft().rotateLeft();
+		} else {
+			dir = dir.rotateRight().rotateRight();
+		}
+		if (rc.canMove(dir)) {
+			rc.move(dir);
+		} else {
+			clockWise = !clockWise;
+			if (noRecur) {
+				move(false);
+			}
+		}
 	}
 
 	public boolean broadcast() throws GameActionException {
@@ -214,6 +227,28 @@ public class ScoutBrain implements Brain {
 				runTurn();
 			} catch (Exception e) {
 				e.printStackTrace();
+			}
+		}
+	}
+
+	private void processSignals(RobotController rc) throws GameActionException {
+		Signal[] signals = rc.emptySignalQueue();
+		for (Signal s : signals) {
+			if (s.getTeam() == rc.getTeam() && s.getMessage() != null) {
+				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
+				switch (type) {
+				case RADIUS:
+					center = s.getLocation();
+					radius = s.getMessage()[1];
+					break;
+				case ZOMBIEDEN:
+					break;
+				case SCOUTQUORUM:
+					rc.broadcastSignal(rc.getLocation().distanceSquaredTo(s.getLocation()));
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}

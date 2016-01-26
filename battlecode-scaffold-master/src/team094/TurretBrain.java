@@ -185,7 +185,7 @@ public class TurretBrain implements Brain {
 			}
 		}
 		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if (timer == 0 || enemiesInSight(rc)) {
+			if (enemiesInSight(rc)) {
 				rc.unpack();
 			} else if (shouldMoveOut) {
 				forward(rc);

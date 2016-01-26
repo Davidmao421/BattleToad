@@ -1,7 +1,7 @@
 package team094;
 
 import java.util.ArrayList;
-
+import team094.Statics;
 import battlecode.common.*;
 import scala.Int;
 
