@@ -1,6 +1,6 @@
-package team094;
+package team094old;
 
-import team094.PacketType;
+import team094old.PacketType;
 
 public class Tester {
 
