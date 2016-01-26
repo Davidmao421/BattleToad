@@ -116,6 +116,13 @@ public class ArchonBrain implements Brain {
 		}
 		return false;
 	}
+	
+	private void scavenger() throws GameActionException{
+		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0){
+			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
+		}
+		scavenge();
+	}
 
 	private void group() throws GameActionException {
 		if (isLeader) {// leader
@@ -130,7 +137,7 @@ public class ArchonBrain implements Brain {
 			}
 		} else {// not leader
 			if (isScavenger) {
-				scavenge();
+				scavenger();
 				return;
 			}
 			Statics.moveTo(rc.getLocation().directionTo(lastLoc), rc);
@@ -223,14 +230,9 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void randomlyMove() throws GameActionException {
-		ArrayList<Direction> potential = new ArrayList<>(Arrays.asList(Statics.directions));
-		while (potential.size() > 0) {
-			Direction d = potential.remove((int) (Math.random() * potential.size()));
-			if (rc.canMove(d)) {
-				rc.move(d);
-				return;
-			}
-		}
+		if (!rc.isCoreReady())return;
+		if (!buildRobot(RobotType.SCOUT))
+			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);;
 	}
 
 	private void scavenge() throws GameActionException {
