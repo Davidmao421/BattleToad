@@ -51,7 +51,6 @@ public class TurretBrain implements Brain {
 					MapLocation target2 = Statics.closestRobot(rc.getLocation(), temp,
 							GameConstants.TURRET_MINIMUM_RANGE);
 					if (target2 != null) {
-						System.out.print("target");
 						attack(rc, target2);
 					}
 				}

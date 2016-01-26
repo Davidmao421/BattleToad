@@ -17,6 +17,8 @@ public class ScoutBrain implements Brain {
 	RobotController rc;
 	boolean radiate;
 	boolean clockWise;
+	private double previousHealth;
+	int runaway = 0;
 	private MapLocation center;
 
 	private int radius;
@@ -128,6 +130,7 @@ public class ScoutBrain implements Brain {
 		move(true);
 		senseEnemies();
 		messagesSent = 0;
+		rc.setIndicatorString(1, ""+runaway);
 	}
 
 	// private void processSignals(RobotController rc) throws
@@ -166,14 +169,20 @@ public class ScoutBrain implements Brain {
 	public void move(boolean noRecur) throws GameActionException {
 		if (!rc.isCoreReady())
 			return;
-
 		MapLocation startingArchon = rc.getInitialArchonLocations(rc.getTeam())[0];
 		int dist = rc.getLocation().distanceSquaredTo(startingArchon);
-		if (dist > radius + 40) {
+		if (runaway != 0) {
+			runaway--;
+		}
+		if (rc.getHealth() < rc.getType().maxHealth) {
+			runaway = 1;
+		}
+		previousHealth = rc.getHealth();
+		if (dist > radius + 40 || runaway != 0) {
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon), rc);
 			return;
 		}
-		if (dist < radius) {
+		if (dist <= radius) {
 			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
 			return;
 		}
