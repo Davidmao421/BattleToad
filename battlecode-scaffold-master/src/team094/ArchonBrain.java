@@ -330,7 +330,7 @@ public class ArchonBrain implements Brain {
 						return;
 					}
 				}
-				if (guardsBuilt < 4)
+				if (guardsBuilt < 2)
 					if (rc.hasBuildRequirements(RobotType.SOLDIER)) {
 						buildRobot(RobotType.SOLDIER);
 						guardsBuilt++;
