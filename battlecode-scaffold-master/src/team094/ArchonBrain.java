@@ -290,21 +290,21 @@ public class ArchonBrain implements Brain {
 				}
 			}
 		} else {// not leader
-			// if (rc.isCoreReady() && !digNearby(rc)) {
-			// if (!rc.isCoreReady()) {
-			// return;
-			// }
-			// for (int i = 0; i < 8; i++) {// shuffle
-			// Direction dir = Statics.directions[(i + 8) % 8];
-			// MapLocation loc = rc.getLocation().add(dir);
-			// if (rc.canMove(dir)) {
-			// if (loc.distanceSquaredTo(lastLoc) <= 2) {
-			// rc.move(dir);
-			// return;
-			// }
-			// }
-			// }
-			// }
+			if (rc.isCoreReady() && !digNearby(rc)) {
+				if (!rc.isCoreReady()) {
+					return;
+				}
+				for (int i = 0; i < 8; i++) {// shuffle
+					Direction dir = Statics.directions[(i + 8) % 8];
+					MapLocation loc = rc.getLocation().add(dir);
+					if (rc.canMove(dir)) {
+						if (loc.distanceSquaredTo(lastLoc) <= 2) {
+							rc.move(dir);
+							return;
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -335,7 +335,6 @@ public class ArchonBrain implements Brain {
 	}
 
 	private void runTurn() throws GameActionException {
-		System.out.println("Is Scavenger: " + isScavenger);
 		if (!rc.isCoreReady()) {
 			return;
 		}
