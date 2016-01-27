@@ -85,7 +85,7 @@ public class TurretBrain implements Brain {
 	private boolean enemiesInSight(RobotController rc) {
 		RobotInfo[] robots = rc.senseNearbyRobots();
 		for (RobotInfo robot : robots) {
-			if (robot.team != rc.getTeam()) {
+			if (robot.team == Team.ZOMBIE || robot.team == rc.getTeam().opponent()) {
 				return true;
 			}
 		}
