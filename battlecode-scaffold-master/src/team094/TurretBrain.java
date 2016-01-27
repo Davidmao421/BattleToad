@@ -13,10 +13,14 @@ public class TurretBrain implements Brain {
 	private int timer;
 	private MapLocation attackLoc;
 	private ArrayList<MapLocation> targets;
+	private MapLocation[] startingLocs;
+	private MapLocation[] enemyLocs;
+	private MapLocation mapCenter;
+	private MapLocation leaderLoc;
 
 	private void attack(RobotController rc, MapLocation hostile) throws GameActionException {
 		if (rc.getType() == RobotType.TTM)
-			rc.unpack();
+			return;
 
 		if (hostile == null)
 			return;
@@ -90,12 +94,12 @@ public class TurretBrain implements Brain {
 
 	private boolean shouldMoveOut(RobotController rc) throws GameActionException {
 		MapLocation loc;
-		Direction dir = rc.getLocation().directionTo(center).opposite();
+		Direction dir = rc.getLocation().directionTo(leaderLoc).opposite();
 		for (int i = -1; i <= 1; i++) {
 			loc = rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8]);
 			if (rc.senseRobotAtLocation(
 					rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8])) == null) {
-				int r = loc.distanceSquaredTo(center);
+				int r = loc.distanceSquaredTo(leaderLoc);
 				if (r < radius) {
 					return true;
 				}
@@ -106,12 +110,12 @@ public class TurretBrain implements Brain {
 
 	private boolean shouldMoveIn(RobotController rc) throws GameActionException {
 		MapLocation loc;
-		Direction dir = rc.getLocation().directionTo(center);
+		Direction dir = rc.getLocation().directionTo(leaderLoc);
 		for (int i = -1; i <= 1; i++) {
 			loc = rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8]);
 			if (rc.senseRobotAtLocation(
 					rc.getLocation().add(Statics.directions[(dir.ordinal() + i + 8) % 8])) == null) {
-				int r = loc.distanceSquaredTo(center);
+				int r = loc.distanceSquaredTo(leaderLoc);
 				if (r > radius) {
 					return true;
 				}
@@ -122,13 +126,13 @@ public class TurretBrain implements Brain {
 
 	private void forward(RobotController rc) throws GameActionException {
 		if (rc.isCoreReady()) {
-			Statics.moveTo(rc.getLocation().directionTo(center).opposite(), rc);
+			Statics.moveTo(rc.getLocation().directionTo(leaderLoc).opposite(), rc);
 		}
 	}
 
 	private void reverse(RobotController rc) throws GameActionException {
 		if (rc.isCoreReady()) {
-			Statics.moveTo(rc.getLocation().directionTo(center), rc);
+			Statics.moveTo(rc.getLocation().directionTo(leaderLoc), rc);
 		}
 	}
 
@@ -145,7 +149,7 @@ public class TurretBrain implements Brain {
 					}
 					break;
 				case CENTERHERE:
-					center = SimpleEncoder.decodeLocation(s.getMessage()[1]);
+					leaderLoc = SimpleEncoder.decodeLocation(s.getMessage()[1]);
 					break;
 				case LEADERCHECK:
 					break;
@@ -154,7 +158,7 @@ public class TurretBrain implements Brain {
 				case NEUTRALARCHON:
 					break;
 				case RADIUS:
-					center = s.getLocation();
+					leaderLoc = s.getLocation();
 					radius = s.getMessage()[1];
 					break;
 				case ZOMBIEDEN:
@@ -173,18 +177,17 @@ public class TurretBrain implements Brain {
 		targets = new ArrayList<MapLocation>();
 		processSignals(rc);
 		rc.setIndicatorString(1, "" + radius + ":Radius");
-
+		boolean seeEnemies = enemiesInSight(rc);
 		boolean shouldMoveIn = shouldMoveIn(rc), shouldMoveOut = shouldMoveOut(rc);
 		if (shouldMoveIn || shouldMoveOut) {
-			if (!enemiesInSight(rc)) {
+			if (!seeEnemies && rc.isCoreReady()) {
 				if (rc.getType() == RobotType.TURRET) {
-					timer = 20;
 					rc.pack();
 				}
 			}
 		}
 		if (rc.getType() == RobotType.TTM && rc.isCoreReady()) {
-			if (enemiesInSight(rc)) {
+			if (seeEnemies) {
 				rc.unpack();
 			} else if (shouldMoveOut) {
 				forward(rc);
@@ -224,10 +227,23 @@ public class TurretBrain implements Brain {
 	}
 
 	private void initialize(RobotController rc) throws GameActionException {
+		startingLocs = rc.getInitialArchonLocations(rc.getTeam());
+		enemyLocs = rc.getInitialArchonLocations(rc.getTeam().opponent());
+		MapLocation[] allArchons = new MapLocation[startingLocs.length + enemyLocs.length];
+		int i = 0;
+		for (MapLocation m : startingLocs) {
+			allArchons[i] = m;
+			i++;
+		}
+		for (MapLocation m : enemyLocs) {
+			allArchons[i] = m;
+			i++;
+		}
+		mapCenter = Statics.com(allArchons);
+		leaderLoc = Statics.farthestLoc(mapCenter, startingLocs);
 		timer = 0;
 		previousHealth = rc.getHealth();
 		radius = 8;
-		center = Statics.closestRobot(rc.getLocation(), rc.senseNearbyRobots(-1, rc.getTeam())).location;
 		targets = new ArrayList<MapLocation>();
 		rc.pack();
 	}

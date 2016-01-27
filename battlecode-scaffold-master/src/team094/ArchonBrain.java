@@ -123,8 +123,8 @@ public class ArchonBrain implements Brain {
 					return true;
 				}
 				RobotInfo r = rc.senseRobotAtLocation(other);
-				if (r != null && r.health < r.maxHealth) {
-					return true;
+				if (r.type != RobotType.ARCHON && r != null && r.health < r.maxHealth) {
+					//return true;
 				}
 			}
 		}
@@ -182,7 +182,7 @@ public class ArchonBrain implements Brain {
 		sense();
 		senseEnemies();
 		if (rc.senseHostileRobots(rc.getLocation(), rc.getType().sensorRadiusSquared).length > 0) {
-			Statics.moveTo(rc.getLocation().directionTo(startingLocs[0]), rc);
+			Statics.moveTo(rc.getLocation().directionTo(leaderLoc), rc);
 		}
 		receive();
 		scavenge();
@@ -463,7 +463,7 @@ public class ArchonBrain implements Brain {
 			break;
 		}
 		rc.setIndicatorString(1, s);
-		rc.setIndicatorString(2, "leader" + isLeader);
+		rc.setIndicatorString(2, "leader" + isLeader+" scavenger"+isScavenger);
 	}
 
 	private void initialize() throws GameActionException {

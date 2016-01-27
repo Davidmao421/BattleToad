@@ -19,12 +19,33 @@ public class ScoutBrain implements Brain {
 	boolean clockWise;
 	private double previousHealth;
 	int runaway = 0;
-	private MapLocation center;
+	private MapLocation leaderLoc;
+	private MapLocation mapCenter;
 
 	private int radius;
 	int messagesSent;
 
+	private MapLocation[] startingLocs;
+
+
+	private MapLocation[] enemyLocs;
+
 	public void initialize() {
+		startingLocs = rc.getInitialArchonLocations(rc.getTeam());
+		enemyLocs = rc.getInitialArchonLocations(rc.getTeam().opponent());
+		MapLocation[] allArchons = new MapLocation[startingLocs.length + enemyLocs.length];
+		int i = 0;
+		for (MapLocation m : startingLocs) {
+			allArchons[i] = m;
+			i++;
+		}
+		for (MapLocation m : enemyLocs) {
+			allArchons[i] = m;
+			i++;
+		}
+		mapCenter = Statics.com(allArchons);
+		leaderLoc = Statics.farthestLoc(mapCenter, startingLocs);
+		
 		messagesSent = 0;
 		enemyCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam().opponent()));
 		teamCom = Statics.com(rc.getInitialArchonLocations(rc.getTeam()));
@@ -169,8 +190,7 @@ public class ScoutBrain implements Brain {
 	public void move(boolean noRecur) throws GameActionException {
 		if (!rc.isCoreReady())
 			return;
-		MapLocation startingArchon = rc.getInitialArchonLocations(rc.getTeam())[0];
-		int dist = rc.getLocation().distanceSquaredTo(startingArchon);
+		int dist = rc.getLocation().distanceSquaredTo(leaderLoc);
 		if (runaway != 0) {
 			runaway--;
 		}
@@ -179,14 +199,14 @@ public class ScoutBrain implements Brain {
 		}
 		previousHealth = rc.getHealth();
 		if (dist > radius + 40 || runaway != 0) {
-			Statics.moveTo(rc.getLocation().directionTo(startingArchon), rc);
+			Statics.moveTo(rc.getLocation().directionTo(leaderLoc), rc);
 			return;
 		}
 		if (dist <= radius) {
-			Statics.moveTo(rc.getLocation().directionTo(startingArchon).opposite(), rc);
+			Statics.moveTo(rc.getLocation().directionTo(leaderLoc).opposite(), rc);
 			return;
 		}
-		Direction dir = rc.getLocation().directionTo(startingArchon);
+		Direction dir = rc.getLocation().directionTo(leaderLoc);
 		if (clockWise) {
 			dir = dir.rotateLeft().rotateLeft();
 		} else {
@@ -247,7 +267,7 @@ public class ScoutBrain implements Brain {
 				MessageType type = SimpleEncoder.decodeType(s.getMessage()[0]);
 				switch (type) {
 				case RADIUS:
-					center = s.getLocation();
+					leaderLoc = s.getLocation();
 					radius = s.getMessage()[1];
 					break;
 				case ZOMBIEDEN:
