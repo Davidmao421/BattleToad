@@ -160,6 +160,20 @@ public class Statics {
 		}
 		return closest;
 	}
+	public static MapLocation farthestLoc(MapLocation loc, MapLocation[] list) {
+		MapLocation farthest = null;
+		int dist = 0;
+		for (MapLocation l : list) {
+			if (l == null)
+				continue;
+			int td = loc.distanceSquaredTo(l);
+			if (td > dist) {
+				dist = td;
+				farthest = l;
+			}
+		}
+		return farthest;
+	}
 
 	protected static boolean navigateTo(MapLocation goal, RobotController rc) throws GameActionException {
 		if (goal == rc.getLocation()) {
